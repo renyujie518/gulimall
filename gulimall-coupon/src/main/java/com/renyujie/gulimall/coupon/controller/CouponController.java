@@ -81,4 +81,14 @@ public class CouponController {
         return R.ok();
     }
 
+    /**
+     * @Description: 测试接口 用于测试openfeign  模拟获取会员下的优惠券
+     */
+    @RequestMapping("/member/list")
+    public R memberCouponsTest(){
+        //这里仅仅是模拟  就不从数据库中去查了
+        CouponEntity couponEntity = new CouponEntity();
+        couponEntity.setCouponName("测试fegin 会员所属优惠券");
+        return R.ok().put("memberCouponsTest", Arrays.asList(couponEntity));
+    }
 }

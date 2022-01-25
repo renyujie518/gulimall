@@ -8,7 +8,7 @@
 		<version>2.1.8.RELEASE</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
-	<groupId>com.renyujie</groupId>
+	<groupId>com.renyujie.gulimall</groupId>
 	<artifactId>gulimall-ware</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>gulimall-ware</name>
