@@ -19,3 +19,8 @@ buildNumber.properties
 
 
 
+.DS_Store
+.gitignore
+gulimall-common/gulimall-common.iml
+.vscode
+.idea
