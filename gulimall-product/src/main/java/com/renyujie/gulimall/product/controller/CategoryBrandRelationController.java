@@ -1,14 +1,11 @@
 package com.renyujie.gulimall.product.controller;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.renyujie.gulimall.product.entity.CategoryBrandRelationEntity;
 import com.renyujie.gulimall.product.service.CategoryBrandRelationService;
@@ -40,6 +37,20 @@ public class CategoryBrandRelationController {
         return R.ok().put("page", page);
     }
 
+    /**
+     * @Description:一个品牌可以对应多个分类，一个分类也可以对应多个品牌
+     *pms_category_brand_relation表就是存储"品牌"-"分类"间的关系  并设置了冗余字段
+     * 依据接口列表  /product/categorybrandrelation/catelog/list   输入参数为品牌id: brandId
+     *
+     */
+    @GetMapping("/catelog/list")
+    public R catelogList(@RequestParam Long brandId){
+        List<CategoryBrandRelationEntity> data =
+                categoryBrandRelationService.findCategory2BrandRelation(brandId);
+        return R.ok().put("data", data);
+    }
+
+
 
     /**
      * 信息
@@ -53,10 +64,11 @@ public class CategoryBrandRelationController {
 
     /**
      * 保存
+     * 注意 这里前端传的是  {"brandId":1,"catelogId":2}  所以Entity其余字段为null
      */
-    @RequestMapping("/save")
+    @PostMapping ("/save")
         public R save(@RequestBody CategoryBrandRelationEntity categoryBrandRelation){
-		categoryBrandRelationService.save(categoryBrandRelation);
+		categoryBrandRelationService.saveDetial(categoryBrandRelation);
 
         return R.ok();
     }

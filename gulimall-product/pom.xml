@@ -43,6 +43,28 @@
 			<version>RELEASE</version>
 			<scope>test</scope>
 		</dependency>
+<!--		阿里云oss 官网推荐-->
+<!--		<dependency>-->
+<!--			<groupId>com.aliyun.oss</groupId>-->
+<!--			<artifactId>aliyun-sdk-oss</artifactId>-->
+<!--			<version>3.10.2</version>-->
+<!--		</dependency>-->
+
+		<!--        阿里云oss 通过starter版本控制导入  这里根据评论得知要加版本号-->
+<!--		<dependency>-->
+<!--			<groupId>com.alibaba.cloud</groupId>-->
+<!--			<artifactId>spring-cloud-starter-alicloud-oss</artifactId>-->
+<!--			<version>2.1.0.RELEASE</version>-->
+<!--		</dependency>-->
+
+<!--		第三方服务 oss-->
+		<dependency>
+			<groupId>com.renyujie.gulimall</groupId>
+			<artifactId>gulimall-third-party</artifactId>
+			<version>0.0.1-SNAPSHOT</version>
+		</dependency>
+
+
 	</dependencies>
 	<dependencyManagement>
 		<dependencies>

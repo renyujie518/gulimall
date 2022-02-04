@@ -1,10 +1,9 @@
 package com.renyujie.gulimall.product.service.impl;
 
+import com.renyujie.gulimall.product.service.CategoryBrandRelationService;
 import org.springframework.stereotype.Service;
 
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -16,10 +15,16 @@ import com.renyujie.common.utils.Query;
 import com.renyujie.gulimall.product.dao.CategoryDao;
 import com.renyujie.gulimall.product.entity.CategoryEntity;
 import com.renyujie.gulimall.product.service.CategoryService;
+import org.springframework.transaction.annotation.Transactional;
+
+import javax.annotation.Resource;
 
 
 @Service("categoryService")
 public class CategoryServiceImpl extends ServiceImpl<CategoryDao, CategoryEntity> implements CategoryService {
+
+    @Resource
+    CategoryBrandRelationService categoryBrandRelationService;
 
     @Override
     public PageUtils queryPage(Map<String, Object> params) {
@@ -62,6 +67,46 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryDao, CategoryEntity
         // TODO 1 检查当前删除的菜单，是否被别的地方引用
         // 逻辑删除
         baseMapper.deleteBatchIds(idList);
+    }
+
+    /**
+     * @Description: 根据当前所属分类catelogId找到完整路径 [父,子，孙] 比如[2,25,225]
+     */
+    @Override
+    public Long[] findCatelogPath(Long catelogId) {
+        ArrayList<Long> catelogPath = new ArrayList<>();
+        List<Long> parentPath = findParentPath(catelogId, catelogPath);
+        Collections.reverse(parentPath);
+        //list转成数组
+        return parentPath.toArray(new Long[parentPath.size()]);
+    }
+
+    /**
+     * @Description: 级联更新 所有数据
+     * 比如gms_category中的category_name字段变化也更新pms_category_brand_relation表中的category_name字段
+     */
+    @Transactional
+    @Override
+    public void updateCascade(CategoryEntity category) {
+        //首先肯定跟新自己的那张表psm_category
+        this.updateById(category);
+        //category_name字段变化也更新pms_category_brand_relation表中的category_name字段
+        categoryBrandRelationService.updateCategoryNameFromCategoryChange(category.getCatId(), category.getName());
+
+        //TODO 更新其他关联
+
+    }
+
+    /**
+     * @Description: 递归寻找完整路径 但注意是倒序的
+     */
+    private List<Long> findParentPath(Long catelogId, List<Long> catelogPath) {
+        catelogPath.add(catelogId);
+        CategoryEntity currentCategoryEntity = this.getById(catelogId);
+        if (currentCategoryEntity.getParentCid() != 0) {
+            findParentPath(currentCategoryEntity.getParentCid(), catelogPath);
+        }
+        return catelogPath;
     }
 
     /**

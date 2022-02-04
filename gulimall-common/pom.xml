@@ -68,6 +68,28 @@
             <artifactId>spring-cloud-starter-alibaba-nacos-config</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient</artifactId>
+            <version>4.2.1</version>
+        </dependency>
+
+<!--        放到common中别的服务启动会有问题  所以引入第三方服务-->
+<!--        阿里云oss  这里根据评论得知要加版本号-->
+<!--        <dependency>-->
+<!--            <groupId>com.alibaba.cloud</groupId>-->
+<!--            <artifactId>spring-cloud-starter-alicloud-oss</artifactId>-->
+<!--            <version>2.1.0.RELEASE</version>-->
+<!--        </dependency>-->
+
+<!--        通用校验-->
+        <dependency>
+            <groupId>javax.validation</groupId>
+            <artifactId>validation-api</artifactId>
+            <version>2.0.1.Final</version>
+        </dependency>
+
+
     </dependencies>
 
 

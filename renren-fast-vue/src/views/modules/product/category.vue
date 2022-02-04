@@ -73,7 +73,7 @@ export default {
       updateNodes: [],
       maxLevel: 0,
       title: "",
-      dialogType: "", //表单对话框在edit,add都有可能打开  需要标志位dialogType
+      dialogType: "", //edit,add
       category: {
         name: "",
         parentCid: 0,
@@ -157,34 +157,38 @@ export default {
     },
     handleDrop(draggingNode, dropNode, dropType, ev) {
       console.log("handleDrop: ", draggingNode, dropNode, dropType);
-      //1、当前节点最新的父节点id   pCid
+      //1、当前节点最新的父节点id
       let pCid = 0;
-      //被拖动节点的父亲下所有的子节点
       let siblings = null;
       if (dropType == "before" || dropType == "after") {
-          //前；后的方式进入  pCid就是目标节点dropNode的父ID（undefined是为了边界处理）  siblings同理
-        pCid =dropNode.parent.data.catId == undefined ? 0 : dropNode.parent.data.catId;
+        pCid =
+          dropNode.parent.data.catId == undefined
+            ? 0
+            : dropNode.parent.data.catId;
         siblings = dropNode.parent.childNodes;
       } else {
-          //inner的方式 成儿子了 pCid就是目标节点的ID ， siblings同理
         pCid = dropNode.data.catId;
         siblings = dropNode.childNodes;
       }
       this.pCid.push(pCid);
 
-      //2、当前拖拽节点的最新顺序(siblings重新排序)
+      //2、当前拖拽节点的最新顺序，
       for (let i = 0; i < siblings.length; i++) {
         if (siblings[i].data.catId == draggingNode.data.catId) {
-          //catLevel：被拖动节点的层级
-          let catLevel = draggingNode.level;
           //如果遍历的是当前正在拖拽的节点
+          let catLevel = draggingNode.level;
           if (siblings[i].level != draggingNode.level) {
             //当前节点的层级发生变化
             catLevel = siblings[i].level;
             //修改他子节点的层级
             this.updateChildNodeLevel(siblings[i]);
           }
-          this.updateNodes.push({catId: siblings[i].data.catId,sort: i,parentCid: pCid,catLevel: catLevel});
+          this.updateNodes.push({
+            catId: siblings[i].data.catId,
+            sort: i,
+            parentCid: pCid,
+            catLevel: catLevel
+          });
         } else {
           this.updateNodes.push({ catId: siblings[i].data.catId, sort: i });
         }
@@ -193,7 +197,7 @@ export default {
       //3、当前拖拽节点的最新层级
       console.log("updateNodes", this.updateNodes);
     },
-    updateChildNodeLevel(node) { //递归修改子节点层级
+    updateChildNodeLevel(node) {
       if (node.childNodes.length > 0) {
         for (let i = 0; i < node.childNodes.length; i++) {
           var cNode = node.childNodes[i].data;
@@ -206,7 +210,6 @@ export default {
       }
     },
     allowDrop(draggingNode, dropNode, type) {
-      //draggingNode拖动节点   dropNode目标位置节点  type拖动类型  具体看官网
       //1、被拖动的当前节点以及所在的父节点总层数不能大于3
 
       //1）、被拖动的当前节点总层数
@@ -215,7 +218,7 @@ export default {
       this.countNodeLevel(draggingNode);
       //当前正在拖动的节点+父节点所在的深度不大于3即可
       let deep = Math.abs(this.maxLevel - draggingNode.level) + 1;
-      console.log("正在拖动节点的深度--", deep);
+      console.log("深度：", deep);
 
       //   this.maxLevel
       if (type == "inner") {
@@ -227,30 +230,27 @@ export default {
     countNodeLevel(node) {
       //找到所有子节点，求出最大深度
       if (node.childNodes != null && node.childNodes.length > 0) {
-          //如果有子节点就遍历所有子节点
         for (let i = 0; i < node.childNodes.length; i++) {
           if (node.childNodes[i].level > this.maxLevel) {
             this.maxLevel = node.childNodes[i].level;
           }
-          //递归
           this.countNodeLevel(node.childNodes[i]);
         }
       }
     },
     edit(data) {
-      //data当前目录节点的数据
       console.log("要修改的数据", data);
       this.dialogType = "edit";
       this.title = "修改分类";
       this.dialogVisible = true;
 
-      //发送请求获取当前节点最新的数据(为了防止在edit的时候别人修改了，所以每次edit要获取最新 传入当前要修改目录的id)
+      //发送请求获取当前节点最新的数据
       this.$http({
         url: this.$http.adornUrl(`/product/category/info/${data.catId}`),
         method: "get"
       }).then(({ data }) => {
-        //请求成功 注意这个data是从后端得来的data /category/info/接口返回 R.ok().put("data", category);
-        console.log("要回显的数据（后端返回最新的该目录的信息）", data);
+        //请求成功
+        console.log("要回显的数据", data);
         this.category.name = data.data.name;
         this.category.catId = data.data.catId;
         this.category.icon = data.data.icon;
@@ -268,17 +268,12 @@ export default {
       });
     },
     append(data) {
-      //data是提交的表单的数据
       console.log("append", data);
       this.dialogType = "add";
       this.title = "添加分类";
-      //打开对话框dialog
       this.dialogVisible = true;
-      //表单的父id = 当前操作目录的id 即catId
       this.category.parentCid = data.catId;
-      //新添加的目录表单的层级catLevel = 往下顺延一位，其实就是当前操作目录+1  *1是防止输入的是string 乘1转化为数字
       this.category.catLevel = data.catLevel * 1 + 1;
-      //每次表单操作后  数据category要清空
       this.category.catId = null;
       this.category.name = "";
       this.category.icon = "";
@@ -295,9 +290,8 @@ export default {
         this.editCategory();
       }
     },
-    //点击确认后-修改三级分类数据
+    //修改三级分类数据
     editCategory() {
-      //给后端update的时候只发送”被修改的字段“
       var { catId, name, icon, productUnit } = this.category;
       this.$http({
         url: this.$http.adornUrl("/product/category/update"),
@@ -316,13 +310,12 @@ export default {
         this.expandedKey = [this.category.parentCid];
       });
     },
-    //点击确认后-添加三级分类
+    //添加三级分类
     addCategory() {
       console.log("提交的三级分类数据", this.category);
       this.$http({
         url: this.$http.adornUrl("/product/category/save"),
         method: "post",
-        //前端的json对象category经过表单填充后post后端  后端通过@RequestBody转化为entity对象,属性名一一对应
         data: this.$http.adornData(this.category, false)
       }).then(({ data }) => {
         this.$message({
@@ -331,26 +324,24 @@ export default {
         });
         //关闭对话框
         this.dialogVisible = false;
-        //因为添加了 刷新出新的菜单
+        //刷新出新的菜单
         this.getMenus();
-        //设置需要默认展开的菜单（新添加菜单的父菜单）
+        //设置需要默认展开的菜单
         this.expandedKey = [this.category.parentCid];
       });
     },
 
     remove(node, data) {
-      console.log("remove",node,data)
       var ids = [data.catId];
-      //删除前先弹确认框   
       this.$confirm(`是否删除【${data.name}】菜单?`, "提示", {
         confirmButtonText: "确定",
         cancelButtonText: "取消",
         type: "warning"
-      }).then(() => {
+      })
+        .then(() => {
           this.$http({
             url: this.$http.adornUrl("/product/category/delete"),
             method: "post",
-            // 后端删除的入参为List(ids)
             data: this.$http.adornData(ids, false)
           }).then(({ data }) => {
             this.$message({
@@ -359,10 +350,13 @@ export default {
             });
             //刷新出新的菜单
             this.getMenus();
-            //设置需要默认展开的菜单=当前节点父节点的id（达到删除一个节点node其父目录依旧展开的效果）
+            //设置需要默认展开的菜单
             this.expandedKey = [node.parent.data.catId];
           });
-        }).catch(() => {});
+        })
+        .catch(() => {});
+
+      console.log("remove", node, data);
     }
   },
   //生命周期 - 创建完成（可以访问当前this实例）

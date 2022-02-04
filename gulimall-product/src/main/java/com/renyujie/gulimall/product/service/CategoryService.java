@@ -27,5 +27,17 @@ public interface CategoryService extends IService<CategoryEntity> {
      * @Description: 删除目录
      */
     void removeCategoryByIds(List<Long> asList);
+
+    /**
+     * @Description: 根据当前所属分类catelogId找到完整路径 [父,子，孙] 比如[2,25,225]
+     */
+    Long[] findCatelogPath(Long catelogId);
+
+
+    /**
+     * @Description: 级联更新 所有数据
+     * 比如gms_category中的category_name字段变化也更新pms_category_brand_relation表中的category_name字段
+     */
+    void updateCascade(CategoryEntity category);
 }
 
