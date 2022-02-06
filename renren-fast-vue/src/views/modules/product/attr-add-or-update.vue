@@ -216,7 +216,23 @@ export default {
             if (data && data.code === 0) {
               this.dataForm.attrName = data.attr.attrName;
               this.dataForm.searchType = data.attr.searchType;
-              this.dataForm.valueType = data.attr.valueType;
+              //前端默认允许多个值  后端pms_attr压根没存这个字段
+              //base:基本属性 attrType = 1    sale:销售属性 attrType = 0
+              //一般来说  基本属性允许多个值  valueType =1  销售属性只允许1个  valueType = 0
+              //解释这句话  base对应"规格参数"页面 比如京东里 手机都有上市年份这个"属性" 而且上市年份不止一年
+              //           sale对应"销售属性"页面 对应到具体的销售物 huaweimate20 其上市年份只有1个
+              //实在不理解  可以再去看看视频p70集
+
+              //两者一致  所以在新增/修改框回显的时候可以直接依据此判断
+              // 同理在baseattr.vue中直接将scope.row.valueType改成了scope.row.attrType
+
+              //还有中方法2在数据库的pms_attr表加上value_type字段，类型为tinyint就行；
+              //在代码中，AttyEntity.java、AttrVo.java中各添加：private Integer valueType，
+              //在AttrDao.xml中添加：<result property="valueType" column="value_type"/>
+              //弹幕提示p85可能报错  待定
+              //在接口中确认了：每次修改跟新时都发送value_type字段，值也是对应正确的，就是接收的时候没有，前端取默认值1（多值）
+              this.dataForm.valueType = data.attr.attrType;
+              // this.dataForm.valueType = data.attr.valueType;
               this.dataForm.icon = data.attr.icon;
               this.dataForm.valueSelect = data.attr.valueSelect.split(";");
               this.dataForm.attrType = data.attr.attrType;

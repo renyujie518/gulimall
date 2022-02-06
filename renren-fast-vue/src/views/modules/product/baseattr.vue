@@ -49,7 +49,7 @@
           </el-table-column>
           <el-table-column prop="valueType" header-align="center" align="center" label="值类型">
             <template slot-scope="scope">
-              <el-tag type="success" v-if="scope.row.valueType==0">单选</el-tag>
+              <el-tag type="success" v-if="scope.row.attrType==0">单选</el-tag>
               <el-tag v-else>多选</el-tag>
             </template>
           </el-table-column>
@@ -247,5 +247,5 @@ export default {
   }
 };
 </script>
-<style scoped>
+<style>
 </style>

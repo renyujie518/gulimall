@@ -1,7 +1,13 @@
 package com.renyujie.gulimall.product.service.impl;
 
+import com.renyujie.gulimall.product.vo.AttrGroupRelationVo;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -24,6 +30,21 @@ public class AttrAttrgroupRelationServiceImpl extends ServiceImpl<AttrAttrgroupR
         );
 
         return new PageUtils(page);
+    }
+
+    /**
+     * @Description: 添加属性与分组关联关系
+     * 在"属性分组"页面的"关联"中的"新增关联"时"确认新增"的提交
+     */
+    @Override
+    public void saveBatchWhenGroup(List<AttrGroupRelationVo> vos) {
+
+        List<AttrAttrgroupRelationEntity> relationEntities = vos.stream().map((relationVo) -> {
+            AttrAttrgroupRelationEntity relationEntity = new AttrAttrgroupRelationEntity();
+            BeanUtils.copyProperties(relationVo, relationEntity);
+            return relationEntity;
+        }).collect(Collectors.toList());
+        this.saveBatch(relationEntities);
     }
 
 }
