@@ -43,7 +43,7 @@ public interface AttrService extends IService<AttrEntity> {
     void updateAttr(AttrVo attrVo);
 
     /**
-     * @Description: 获取指定分组关联的所有属性
+     * @Description: 获取每个group下的的所有属性
      * pms_attr_attrgroup_relation表中 一个attr_group_id对应多个attr_id  即一个分组下有多个属性
      */
     List<AttrEntity> getAttrsFromGroupId(Long attrgroupId);

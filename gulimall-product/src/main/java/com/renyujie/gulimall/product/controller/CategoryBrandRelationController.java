@@ -3,7 +3,10 @@ package com.renyujie.gulimall.product.controller;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
+import com.renyujie.gulimall.product.entity.BrandEntity;
+import com.renyujie.gulimall.product.vo.BrandVo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -48,6 +51,23 @@ public class CategoryBrandRelationController {
         List<CategoryBrandRelationEntity> data =
                 categoryBrandRelationService.findCategory2BrandRelation(brandId);
         return R.ok().put("data", data);
+    }
+
+    /**
+     * @Description: 获取分类关联的品牌
+     * 在"发布商品"的"品牌选择"时获取该catelog目录下的所有品牌
+     */
+    @GetMapping("/brands/list")
+    public R relationBrandsList(@RequestParam(value = "catId", required = true) Long catId) {
+        //这里返回BrandEntity是其内容更加全面
+        List<BrandEntity> entities = categoryBrandRelationService.getBrandsBycatId(catId);
+        List<BrandVo> brandVoList = entities.stream().map((entity) -> {
+            BrandVo brandVo = new BrandVo();
+            brandVo.setBrandId(entity.getBrandId());
+            brandVo.setBrandName(entity.getName());
+            return brandVo;
+        }).collect(Collectors.toList());
+        return R.ok().put("data",brandVoList);
     }
 
 

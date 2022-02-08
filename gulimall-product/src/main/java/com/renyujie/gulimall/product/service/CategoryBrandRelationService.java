@@ -2,6 +2,7 @@ package com.renyujie.gulimall.product.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.renyujie.common.utils.PageUtils;
+import com.renyujie.gulimall.product.entity.BrandEntity;
 import com.renyujie.gulimall.product.entity.CategoryBrandRelationEntity;
 
 import java.util.List;
@@ -38,5 +39,11 @@ public interface CategoryBrandRelationService extends IService<CategoryBrandRela
      * @Description: gms_category中的category_name字段变化也更新pms_category_brand_relation表中的category_name字段
      */
     void updateCategoryNameFromCategoryChange(Long catId, String name);
+
+    /**
+     * @Description: 获取分类关联的品牌
+     * 在"发布商品"的"品牌选择"时获取该catelog目录下的所有品牌
+     */
+    List<BrandEntity> getBrandsBycatId(Long catId);
 }
 

@@ -95,19 +95,17 @@ public class AttrServiceImpl extends ServiceImpl<AttrDao, AttrEntity> implements
     @Override
     public PageUtils queryBaseAttrPage(Map<String, Object> params, Long catelogId, String attrType) {
         //在构造wrapper的时候就区分是"base"还是"sale"
-        QueryWrapper<AttrEntity> wrapper = new QueryWrapper<AttrEntity>().eq("attr_type",
-                "base".equalsIgnoreCase(attrType) ?
-                        ProductConstant.AttrEnum.ATTR_TYPE_BASE.getCode() :
-                        ProductConstant.AttrEnum.ATTR_ENUM_SALE.getCode());
+        QueryWrapper<AttrEntity> wrapper = new QueryWrapper<AttrEntity>()
+                .eq("attr_type", "base".equalsIgnoreCase(attrType)?ProductConstant.AttrEnum.ATTR_TYPE_BASE.getCode():ProductConstant.AttrEnum.ATTR_ENUM_SALE.getCode());
         //前端带catelogId 就查询指定,否则就查询全部，所以首先就在wrapper中判断catelogId
         if (catelogId != 0) {
             wrapper.eq("catelog_id", catelogId);
         }
         //处理模糊查询
-        String key = String.valueOf(params.get("key"));
+        String key = (String)params.get("key");
         if (!StringUtils.isEmpty(key)) {
-            wrapper.and((wrap) -> {
-                wrap.eq("attr_id", key).or().like("attr_name", key);
+            wrapper.and(obj->{
+                obj.eq("attr_id", key).or().like("attr_id", key);
             });
         }
         IPage<AttrEntity> page = this.page(
@@ -116,42 +114,39 @@ public class AttrServiceImpl extends ServiceImpl<AttrDao, AttrEntity> implements
         );
         //查看接口文档 返回字段还包括   catelogName：所属分类名字  groupName ：所属分组名字
         //这两个字段 明显要去联合表中查  然后在page中依次封装新的vo
-        PageUtils pageResponse = new PageUtils(page);
-        List<AttrEntity> records = page.getRecords();
-        List<AttrRespVo>  attrRespVoResponse = records.stream().map((attrEntity) -> {
-            AttrRespVo attrRespVo = new AttrRespVo();
-            //基本字段先复制过去
-            BeanUtils.copyProperties(attrEntity, attrRespVo);
+        PageUtils pageUtils = new PageUtils(page);
 
+        List<AttrEntity> records = page.getRecords();
+        List<AttrRespVo> respVoList = records.stream().map((attrEntity) -> {
+            //基本字段先复制过去
+            AttrRespVo attrRespVo = new AttrRespVo();
+            BeanUtils.copyProperties(attrEntity, attrRespVo);
             //补充groupName字段
             /**注意：销售属性不存在分组的  只有基本属性base才会有**/
-            if ("base".equalsIgnoreCase(attrType)){
-                AttrAttrgroupRelationEntity attr_idEntity = attrAttrgroupRelationDao.selectOne(
-                        new QueryWrapper<AttrAttrgroupRelationEntity>().eq("attr_id", attrEntity.getAttrId()));
+            if ("base".equalsIgnoreCase(attrType)) {
+                AttrAttrgroupRelationEntity relationEntity = attrAttrgroupRelationDao.selectOne(new QueryWrapper<AttrAttrgroupRelationEntity>().eq("attr_id", attrEntity.getAttrId()));
                 /**
                  ！！！！！！！！
                  当一个DAO查出的结果紧接着被另个一DAO用到或者当参数参数传入的时候 别不下面的情况 最好做参数非空校验  否则容易空指针异常
                  ！！！！！！！！
                  **/
-                if (attr_idEntity != null && attr_idEntity.getAttrGroupId() != null) {
-                    AttrGroupEntity attrGroupEntity = attrGroupDao.selectById(attr_idEntity.getAttrGroupId());
+                if (relationEntity != null && relationEntity.getAttrGroupId() != null) {
+                    AttrGroupEntity attrGroupEntity = attrGroupDao.selectById(relationEntity.getAttrGroupId());
                     attrRespVo.setGroupName(attrGroupEntity.getAttrGroupName());
                 }
             }
-
             //补充catelogName字段
             CategoryEntity categoryEntity = categoryDao.selectById(attrEntity.getCatelogId());
             if (categoryEntity != null) {
                 attrRespVo.setCatelogName(categoryEntity.getName());
             }
-
+            //设置分类名
             return attrRespVo;
-
         }).collect(Collectors.toList());
-
-        pageResponse.setList(attrRespVoResponse);
-        return pageResponse;
+        pageUtils.setList(respVoList);
+        return pageUtils;
     }
+
 
     /**
      * @Description:"规格参数"新增页面回显

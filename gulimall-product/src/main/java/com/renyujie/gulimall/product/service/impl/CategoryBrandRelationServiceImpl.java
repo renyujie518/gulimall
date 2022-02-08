@@ -1,6 +1,7 @@
 package com.renyujie.gulimall.product.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
+import com.renyujie.gulimall.product.dao.BrandDao;
 import com.renyujie.gulimall.product.entity.BrandEntity;
 import com.renyujie.gulimall.product.entity.CategoryEntity;
 import com.renyujie.gulimall.product.service.BrandService;
@@ -9,6 +10,8 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -86,6 +89,23 @@ public class CategoryBrandRelationServiceImpl extends ServiceImpl<CategoryBrandR
         //这里为了学习  在mapper中编写sql语句
         this.baseMapper.updateCategoryNameFromCategoryChange(catId, name);
 
+    }
+
+    /**
+     * @Description: 获取分类关联的品牌
+     * 在"发布商品"的"品牌选择"时获取该catelog目录下的所有品牌
+     */
+    @Override
+    public List<BrandEntity> getBrandsBycatId(Long catId) {
+        List<CategoryBrandRelationEntity> relationEntities = this.baseMapper.selectList(new QueryWrapper<CategoryBrandRelationEntity>()
+                .eq("catelog_id", catId));
+        //原视频中是在循环中查表 这样其实在公司是禁止的
+        //其实视频中的意思是 relationEntities关于品牌的信息补全 想通过brand_id去pms_brand中查到brandEntity
+        List<Long> brandIds = relationEntities.stream().map((relationEntity) -> {
+            return relationEntity.getBrandId();
+        }).collect(Collectors.toList());
+        List<BrandEntity> brandsByIds = brandService.getBrandsByIds(brandIds);
+        return brandsByIds;
     }
 
 }

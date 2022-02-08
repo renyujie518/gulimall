@@ -3,7 +3,9 @@ package com.renyujie.gulimall.product.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.renyujie.common.utils.PageUtils;
 import com.renyujie.gulimall.product.entity.AttrGroupEntity;
+import com.renyujie.gulimall.product.vo.AttrGroupWithAttrsVo;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -21,5 +23,13 @@ public interface AttrGroupService extends IService<AttrGroupEntity> {
      * @Description: 通过id查询分页list
      */
     PageUtils queryPage(Map<String, Object> params, Long catelogId);
+
+    /**
+     * @Description: 获取分类下所有分组&关联属性
+     *"发布商品"的第二步"规格参数"需要获取1category下的所有group,每个group下又要获取所有的attr
+     *1、查出当前分类下的所有属性分组，
+     *2、查出每个属性分组的所有属性
+     */
+    List<AttrGroupWithAttrsVo> getAttrGroupWithAttrsByCatelogId(Long catelogId);
 }
 

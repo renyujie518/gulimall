@@ -81,9 +81,13 @@
                     type="hidden"
                     v-show="false"
                   ></el-input>
+<!--                  这里multiple改为attrType的逻辑与attr-add-or-update.vue的234的改动原因一致-->
+<!--                  一般来说  基本属性允许多个值  valueType =1  销售属性只允许1个  valueType = 0-->
+<!--                  这里处理的都是base(规格参数)的  所以attrType == 1代表允许多个-->
+<!--                  方法2在数据库的pms_attr表加上value_type字段  未尝试-->
                   <el-select
                     v-model="dataResp.baseAttrs[gidx][aidx].attrValues"
-                    :multiple="attr.valueType == 1"
+                    :multiple="attr.attrType == 1"
                     filterable
                     allow-create
                     default-first-option
@@ -458,13 +462,13 @@ export default {
         brandId: "",
         weight: "",
         publishStatus: 0,
-        decript: [], 
-        images: [], 
+        decript: [],
+        images: [],
         bounds: {
           buyBounds: 0,
           growBounds: 0
         },
-        baseAttrs: [], 
+        baseAttrs: [],
         skus: []
       };
     },
@@ -676,7 +680,10 @@ export default {
           //先对表单的baseAttrs进行初始化
           data.data.forEach(item => {
             let attrArray = [];
-            if (item.attrs != null) {
+            //这是弹幕中的提示 否则容易报foreach错误 是因为确实有可能某个group下没有attrs
+            // 或者说后端传来的AttrGroupWithAttrsVo中attrs[]为null 这样相当于空指针异常 所以报错
+            //最好在后端就杜绝attrs[]为null这个可能性  本次采用在后端杜绝 具体见attrGroupWithAttrs方法
+            // if (item.attrs != null) {
               item.attrs.forEach(attr => {
               attrArray.push({
                 attrId: attr.attrId,
@@ -684,8 +691,8 @@ export default {
                 showDesc: attr.showDesc
               });
             });
-            }
-            
+            // }
+
             this.dataResp.baseAttrs.push(attrArray);
           });
           this.dataResp.steped[0] = 0;
@@ -806,5 +813,5 @@ export default {
   activated() {} //如果页面有keep-alive缓存功能，这个函数会触发
 };
 </script>
-<style scoped>
+<style>
 </style>

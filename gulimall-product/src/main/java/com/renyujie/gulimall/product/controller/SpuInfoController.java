@@ -3,6 +3,7 @@ package com.renyujie.gulimall.product.controller;
 import java.util.Arrays;
 import java.util.Map;
 
+import com.renyujie.gulimall.product.vo.SpuSaveVo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -31,11 +32,11 @@ public class SpuInfoController {
     private SpuInfoService spuInfoService;
 
     /**
-     * 列表
+     * "spu管理"页面获取详情  带模糊检索
      */
     @RequestMapping("/list")
         public R list(@RequestParam Map<String, Object> params){
-        PageUtils page = spuInfoService.queryPage(params);
+        PageUtils page = spuInfoService.queryPageByCondition(params);
 
         return R.ok().put("page", page);
     }
@@ -52,12 +53,14 @@ public class SpuInfoController {
     }
 
     /**
-     * 保存
+     * /product/spuinfo/save
+     * "发布商品"的最终大保存
+     * 非常大的一个方法
+     * SpuSaveVo是前端json生成的大对象
      */
     @RequestMapping("/save")
-        public R save(@RequestBody SpuInfoEntity spuInfo){
-		spuInfoService.save(spuInfo);
-
+        public R save(@RequestBody SpuSaveVo spuSaveVo){
+		spuInfoService.saveSpuInfo(spuSaveVo);
         return R.ok();
     }
 
