@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.renyujie.common.utils.PageUtils;
 import com.renyujie.gulimall.product.entity.ProductAttrValueEntity;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -16,5 +17,15 @@ import java.util.Map;
 public interface ProductAttrValueService extends IService<ProductAttrValueEntity> {
 
     PageUtils queryPage(Map<String, Object> params);
+
+    /**
+     * @Description: 获取spu规格  用于"spu管理"点击"规格维护"后的回显
+     */
+    List<ProductAttrValueEntity> baseListForSpu(Long spuId);
+
+    /**
+     * @Description: 修改商品规格  用于"spu管理"点击"规格维护"后 修改后跟新
+     */
+    void updateSpuAttr(Long spuId, List<ProductAttrValueEntity> entities);
 }
 

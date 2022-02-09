@@ -2,6 +2,7 @@
 #  cloud:
 #    gateway:
 #      routes:
+#        # 两个练手的
 #        - id: test_baidu_route
 #          uri: https://baidu.com
 #          predicates:
@@ -10,3 +11,43 @@
 #          uri: https://qq.com
 #          predicates:
 #            - Query=url,qq
+#        # PATH为精准的路由 优先级高
+#        #商品服务
+#        - id: product_route
+#          uri: lb://gulimall-product
+#          predicates:
+#            - Path=/api/product/**
+#          filters:
+#            - RewritePath=/api/(?<segment>.*),/$\{segment}
+#        #仓储服务
+#        - id: ware_route
+#          uri: lb://gulimall-ware
+#          predicates:
+#            - Path=/api/ware/**
+#          filters:
+#            - RewritePath=/api/(?<segment>.*),/$\{segment}
+#
+#        #三方服务
+#        - id: third_party_route
+#          uri: lb://gulimall-third-party
+#          predicates:
+#            - Path=/api/thirdparty/**
+#          filters:
+#            - RewritePath=/api/thirdparty/(?<segment>.*),/$\{segment}
+#        #会员服务
+#        - id: member_route
+#          uri: lb://gulimall-member
+#          predicates:
+#            - Path=/api/member/**
+#          filters:
+#            - RewritePath=/api/(?<segment>.*),/$\{segment}
+#
+#        - id: admin_route
+#          uri: lb://renren-fast
+#          # 前端发来的请求都带/api
+#          predicates:
+#            - Path=/api/**
+#          filters:
+#            - RewritePath=/api/(?<segment>.*),/renren-fast/$\{segment}
+#
+#

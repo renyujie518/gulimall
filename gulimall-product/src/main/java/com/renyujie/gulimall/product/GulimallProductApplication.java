@@ -5,11 +5,11 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 import org.springframework.cloud.openfeign.EnableFeignClients;
+import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 @EnableDiscoveryClient
 @EnableFeignClients(basePackages = "com.renyujie.gulimall.product.feign")
 @SpringBootApplication
-@MapperScan("com.renyujie.gulimall.product.dao")
 public class GulimallProductApplication {
 
 	public static void main(String[] args) {

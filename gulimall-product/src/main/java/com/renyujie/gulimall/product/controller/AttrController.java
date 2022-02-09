@@ -1,8 +1,11 @@
 package com.renyujie.gulimall.product.controller;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
+import com.renyujie.gulimall.product.entity.ProductAttrValueEntity;
+import com.renyujie.gulimall.product.service.ProductAttrValueService;
 import com.renyujie.gulimall.product.vo.AttrRespVo;
 import com.renyujie.gulimall.product.vo.AttrVo;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,6 +16,7 @@ import com.renyujie.gulimall.product.service.AttrService;
 import com.renyujie.common.utils.PageUtils;
 import com.renyujie.common.utils.R;
 
+import javax.annotation.Resource;
 
 
 /**
@@ -27,6 +31,9 @@ import com.renyujie.common.utils.R;
 public class AttrController {
     @Autowired
     private AttrService attrService;
+
+    @Resource
+    ProductAttrValueService productAttrValueService;
 
     /**
      * 列表
@@ -90,6 +97,24 @@ public class AttrController {
         public R delete(@RequestBody Long[] attrIds){
 		attrService.removeByIds(Arrays.asList(attrIds));
 
+        return R.ok();
+    }
+/**
+ * @Description: 获取spu规格  用于"spu管理"点击"规格维护"后的回显
+ */
+    @GetMapping("/base/listforspu/{spuId}")
+    public R baseAttrList(@PathVariable("spuId") Long spuId) {
+        List<ProductAttrValueEntity> entities = productAttrValueService.baseListForSpu(spuId);
+        return R.ok().put("data", entities);
+    }
+
+    /**
+     * @Description: 修改商品规格  用于"spu管理"点击"规格维护"后 修改后跟新
+     */
+    @PostMapping("/update/{spuId}")
+    public R updateSpuAttr(@PathVariable("spuId") Long spuId,
+                           @RequestBody List<ProductAttrValueEntity> entities){
+        productAttrValueService.updateSpuAttr(spuId, entities);
         return R.ok();
     }
 
