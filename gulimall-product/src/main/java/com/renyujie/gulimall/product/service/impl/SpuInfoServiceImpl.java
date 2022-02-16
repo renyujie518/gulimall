@@ -1,10 +1,15 @@
 package com.renyujie.gulimall.product.service.impl;
 
+import com.alibaba.fastjson.TypeReference;
+import com.renyujie.common.constant.ProductConstant;
 import com.renyujie.common.dto.SkuReductionTo;
 import com.renyujie.common.dto.SpuBoundsTo;
+import com.renyujie.common.dto.es.SkuEsModel;
 import com.renyujie.common.utils.R;
 import com.renyujie.gulimall.product.entity.*;
 import com.renyujie.gulimall.product.feign.CouponFeignService;
+import com.renyujie.gulimall.product.feign.SearchFeignService;
+import com.renyujie.gulimall.product.feign.WareFeignService;
 import com.renyujie.gulimall.product.service.*;
 import com.renyujie.gulimall.product.vo.*;
 import lombok.extern.log4j.Log4j;
@@ -13,6 +18,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -55,6 +61,18 @@ public class SpuInfoServiceImpl extends ServiceImpl<SpuInfoDao, SpuInfoEntity> i
 
     @Resource
     CouponFeignService couponFeignService;
+
+    @Resource
+    BrandService brandService;
+
+    @Resource
+    CategoryService categoryService;
+
+    @Resource
+    WareFeignService wareFeignService;
+
+    @Resource
+    SearchFeignService searchFeignService;
 
 
 
@@ -268,6 +286,104 @@ public class SpuInfoServiceImpl extends ServiceImpl<SpuInfoDao, SpuInfoEntity> i
                 new Query<SpuInfoEntity>().getPage(params), wrapper
         );
         return new PageUtils(page);
+
+
+    }
+
+    /**
+     * @Description: 商品上架  对应"spu管理"的"上架"按钮 同时存储sku到es中
+     *值得注意的是  SkuInfoEntity和SkuEsModel两个对象在属性互拷时如下字段没有或者名字不一致 需要单独处理
+     * ①skuPrice  ②skuImg  ③hasStock ④hotScore ⑤brandName ⑥brandImg  ⑦catalogName  ⑧attrs（还其中的attrId，attrName，attrValue）
+     * 但是别忘了  最终的目的是构建 SkuEsModel 给es
+     * 共4个步骤
+     */
+    @Override
+    public void up(Long spuId) {
+        /**步骤1  传入的是spuId  通过spuId获得对应的所有sku **/
+        List<SkuInfoEntity> skus = skuInfoService.getSkusById(spuId);
+        List<Long> skuIdList = skus.stream().map(SkuInfoEntity::getSkuId).collect(Collectors.toList());
+
+        /**前置准备1
+              查询当前sku的所有被用来检索(search_type=1)的规格属性 attrsListCanSearch
+              由于在设计表的时候 1个spu对应同1种attrs 所以同属于1个spuId的所有skus下的attrs都一样  没必要在下面反复查
+              所以在这里直接查出  注意要筛选出 search_type=1 的
+         **/
+        //1个spuId下的所有attrs信息记录在'pms_product_attr_value'表下
+        List<ProductAttrValueEntity> baseListFromSpu = productAttrValueService.baseListForSpu(spuId);
+        //得到attrIds后再过滤
+        List<Long> attrIds = baseListFromSpu.stream().map(ProductAttrValueEntity::getAttrId).collect(Collectors.toList());
+        //依据'pms_attr'表中所记录的search_type字段过滤
+        List<Long> AttrIdsCanSearch = attrService.selectSearchAttrIds(attrIds);
+        //有了上述的AttrIdsCanSearch  可以对之前查到的ProductAttrValueEntity的列表操作取对应变量了 这里巧妙地的运用了set的特性
+        HashSet<Long> AttrIdsCanSearchSet = new HashSet<>(AttrIdsCanSearch);
+
+        List<SkuEsModel.Attrs> attrsListCanSearch = baseListFromSpu.stream().filter((baseAttr) -> {
+            return AttrIdsCanSearchSet.contains(baseAttr.getAttrId());
+        }).map((baseAttr) -> {
+            //对比发现所需要的 ⑧attrs（还其中的attrId，attrName，attrValue）在ProductAttrValueEntity中都有
+            SkuEsModel.Attrs modelAttr = new SkuEsModel.Attrs();
+            BeanUtils.copyProperties(baseAttr, modelAttr);
+            return modelAttr;
+        }).collect(Collectors.toList());
+        /**前置准备2
+                openfegin gulimall-ware查询是否有库存
+                同理 在步骤2 中为了③变量反复调用远程接口 不好 所以在这里统一查出skuIds对应是否有库存
+                这里利用了Map  key=skuId  value=是否有库存
+         **/
+        Map<Long, Boolean> stockMap = null;
+        try {
+            R r = wareFeignService.getSkuHasStock(skuIdList);
+            TypeReference<List<SkuHasStockVo>> typeReference = new TypeReference<List<SkuHasStockVo>>() {
+            };
+            stockMap = r.getData(typeReference).stream().collect(Collectors.toMap(SkuHasStockVo::getSkuId, SkuHasStockVo::getHasStock));
+
+        } catch (Exception e) {
+            log.error("库存服务查询异常...原因：{}", e);
+        }
+
+        /** 步骤2 封装每个sku的信息到 SkuEsModel **/
+        //要用到stockMap，但匿名内部类使用外部引用必须是隐式final的  这里是idea提示解决的
+        //这里的解决办法是stockMap赋值给一个新map:finalStockMap  这样就可以在skus.stream().map中使用
+        Map<Long, Boolean> finalStockMap = stockMap;
+        List<SkuEsModel> upProducts = skus.stream().map((sku) -> {
+            SkuEsModel skuEsModel = new SkuEsModel();
+            //先把名字相同的（注解中除了带序号的字段  其余直接copy）
+            BeanUtils.copyProperties(sku, skuEsModel);
+            /**  解决①  ② 号变量 **/
+            skuEsModel.setSkuPrice(sku.getPrice());
+            skuEsModel.setSkuImg(sku.getSkuDefaultImg());
+
+            /**  解决 ③hasStock  是否有库存 **/
+            if (finalStockMap == null) {
+                //远程未获得的情况
+                skuEsModel.setHasStock(true);
+            } else {
+                skuEsModel.setHasStock(finalStockMap.get(sku.getSkuId()));
+            }
+            /**  解决 ④hotScore 默认0 **/
+            skuEsModel.setHotScore(0L);
+            /**  解决 ⑤brandName ⑥brandImg  ⑦catalogName  **/
+            BrandEntity brand = brandService.getById(skuEsModel.getBrandId());
+            skuEsModel.setBrandName(brand.getName());
+            skuEsModel.setBrandImg(brand.getLogo());
+            CategoryEntity category = categoryService.getById(skuEsModel.getCatalogId());
+            skuEsModel.setCatalogName(category.getName());
+            /**  解决⑧attrs **/
+            skuEsModel.setAttrs(attrsListCanSearch);
+            return skuEsModel;
+        }).collect(Collectors.toList());
+
+        /** 步骤3  将数据发送给es进行保存 gulimall-search **/
+        R r = searchFeignService.productStatusUp(upProducts);
+        Integer code = r.getCode();
+        if (code == 0) {
+            //远程调用成功
+            /** 步骤4  修改当前spu的publish_status状态为1（pms_spu_info表） 和跟新时间 **/
+            baseMapper.updateSpuStatus(spuId, ProductConstant.StatusEnum.SPU_UP.getCode());
+        } else {
+            //失败
+            //TODO 重复调用的问题 接口幂等性 重试机制
+        }
 
 
     }

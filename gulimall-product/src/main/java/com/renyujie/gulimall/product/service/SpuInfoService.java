@@ -30,5 +30,10 @@ public interface SpuInfoService extends IService<SpuInfoEntity> {
      * "spu管理"页面获取详情  带模糊检索
      */
     PageUtils queryPageByCondition(Map<String, Object> params);
+
+    /**
+     * @Description: 商品上架  对应"spu管理"的"上架"按钮 同时存储sku到es中
+     */
+    void up(Long spuId);
 }
 

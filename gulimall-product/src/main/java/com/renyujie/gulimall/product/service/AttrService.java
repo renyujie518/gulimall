@@ -59,5 +59,11 @@ public interface AttrService extends IService<AttrEntity> {
      * 在"属性分组"页面的"关联"中的"新增关联"时  需要获取该分组下没有关联的其他属性 而且有分类category的要求
      */
     PageUtils getNoRelationAttr(Map<String, Object> params, Long attrGroupId);
+
+    /**
+     *
+     * @Description: 在指定的所有属性集合attrIds里 挑出允许检索属性（search_type=1）的attrIds
+     */
+    List<Long> selectSearchAttrIds(List<Long> attrIds);
 }
 

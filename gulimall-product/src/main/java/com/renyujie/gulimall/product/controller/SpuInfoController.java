@@ -5,17 +5,12 @@ import java.util.Map;
 
 import com.renyujie.gulimall.product.vo.SpuSaveVo;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.renyujie.gulimall.product.entity.SpuInfoEntity;
 import com.renyujie.gulimall.product.service.SpuInfoService;
 import com.renyujie.common.utils.PageUtils;
 import com.renyujie.common.utils.R;
-
 
 
 /**
@@ -35,7 +30,7 @@ public class SpuInfoController {
      * "spu管理"页面获取详情  带模糊检索
      */
     @RequestMapping("/list")
-        public R list(@RequestParam Map<String, Object> params){
+    public R list(@RequestParam Map<String, Object> params) {
         PageUtils page = spuInfoService.queryPageByCondition(params);
 
         return R.ok().put("page", page);
@@ -46,8 +41,8 @@ public class SpuInfoController {
      * 信息
      */
     @RequestMapping("/info/{id}")
-        public R info(@PathVariable("id") Long id){
-		SpuInfoEntity spuInfo = spuInfoService.getById(id);
+    public R info(@PathVariable("id") Long id) {
+        SpuInfoEntity spuInfo = spuInfoService.getById(id);
 
         return R.ok().put("spuInfo", spuInfo);
     }
@@ -59,8 +54,8 @@ public class SpuInfoController {
      * SpuSaveVo是前端json生成的大对象
      */
     @RequestMapping("/save")
-        public R save(@RequestBody SpuSaveVo spuSaveVo){
-		spuInfoService.saveSpuInfo(spuSaveVo);
+    public R save(@RequestBody SpuSaveVo spuSaveVo) {
+        spuInfoService.saveSpuInfo(spuSaveVo);
         return R.ok();
     }
 
@@ -68,8 +63,8 @@ public class SpuInfoController {
      * 修改
      */
     @RequestMapping("/update")
-        public R update(@RequestBody SpuInfoEntity spuInfo){
-		spuInfoService.updateById(spuInfo);
+    public R update(@RequestBody SpuInfoEntity spuInfo) {
+        spuInfoService.updateById(spuInfo);
 
         return R.ok();
     }
@@ -78,10 +73,18 @@ public class SpuInfoController {
      * 删除
      */
     @RequestMapping("/delete")
-        public R delete(@RequestBody Long[] ids){
-		spuInfoService.removeByIds(Arrays.asList(ids));
+    public R delete(@RequestBody Long[] ids) {
+        spuInfoService.removeByIds(Arrays.asList(ids));
 
         return R.ok();
     }
 
+    /**
+     * @Description: 商品上架  对应"spu管理"的"上架"按钮 同时存储sku到es中
+     */
+    @PostMapping("/{spuId}/up")
+    public R spuUp(@PathVariable("spuId") Long spuId) {
+        spuInfoService.up(spuId);
+        return R.ok();
+    }
 }

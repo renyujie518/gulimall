@@ -3,7 +3,9 @@ package com.renyujie.gulimall.ware.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.renyujie.common.utils.PageUtils;
 import com.renyujie.gulimall.ware.entity.WareSkuEntity;
+import com.renyujie.gulimall.ware.vo.SkuHasStockVo;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -27,5 +29,11 @@ public interface WareSkuService extends IService<WareSkuEntity> {
      * stock_locked  锁定库存默认为0
      */
     void addStock(Long skuId, Long wareId, Integer skuNum);
+
+
+    /**
+     * @Description: 批量查询sku是否有库存
+     */
+    List<SkuHasStockVo> getSkuHasStock(List<Long> skuIds);
 }
 

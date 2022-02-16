@@ -19,4 +19,10 @@ public interface WareSkuDao extends BaseMapper<WareSkuEntity> {
      * @Description: 采购成功的sku新增入库  主要更新的就是"库存量"stock字段+skuNum（新购买好的数）
      */
     void addStock(@Param("skuId") Long skuId, @Param("wareId") Long wareId, @Param("skuNum") Integer skuNum);
+
+
+    /**
+     * @Description: 批量查询sku是否有库存
+     */
+    Long getSkuStock(@Param("skuId") Long skuId);
 }

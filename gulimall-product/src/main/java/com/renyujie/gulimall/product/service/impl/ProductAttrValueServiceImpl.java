@@ -33,6 +33,7 @@ public class ProductAttrValueServiceImpl extends ServiceImpl<ProductAttrValueDao
 
     /**
      * @Description: 获取spu规格  用于"spu管理"点击"规格维护"后的回显
+     * 本质上是查出 该spuId下所有的attrs  即属性信息
      */
     @Override
     public List<ProductAttrValueEntity> baseListForSpu(Long spuId) {

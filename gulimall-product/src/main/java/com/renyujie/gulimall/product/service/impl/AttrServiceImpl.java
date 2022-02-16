@@ -320,4 +320,15 @@ public class AttrServiceImpl extends ServiceImpl<AttrDao, AttrEntity> implements
 
     }
 
+    /**
+     *
+     * @Description: 在指定的所有属性集合attrIds里 挑出允许检索属性（search_type=1）的attrIds
+     */
+    @Override
+    public List<Long> selectSearchAttrIds(List<Long> attrIds) {
+        //select attr_id FROM pms_attr WHERE attr_id IN(????) AND search_type = 1
+        return baseMapper.selectSearchAttrIds(attrIds);
+
+    }
+
 }
