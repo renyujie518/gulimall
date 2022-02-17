@@ -63,7 +63,18 @@
 			<artifactId>gulimall-third-party</artifactId>
 			<version>0.0.1-SNAPSHOT</version>
 		</dependency>
+		<!--在不重启服务器的时候，实时更新html-->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-devtools</artifactId>
+			<optional>true</optional>
+		</dependency>
 
+		<!--引入模版引擎 thymeleaf -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-thymeleaf</artifactId>
+		</dependency>
 
 	</dependencies>
 	<dependencyManagement>

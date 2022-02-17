@@ -7,9 +7,10 @@ import lombok.NoArgsConstructor;
 import java.util.List;
 
 /**
- * @author 孟享广
- * @date 2021-01-06 12:33 下午
- * @description
+ *对应"首页"中的catalog.json中对应的格式2级目录的格式（1级是一级的catalog1Id）
+ * static.index.js.catalogLoader.js
+ * 这个js会发送一个ajax请求，然后解析数据
+ *    $.getJSON("index/json/catalog.json",function (data) {}// 这里使用了静态数据catalog.json
  */
 
 //无参构造器
@@ -19,19 +20,11 @@ import java.util.List;
 @Data
 public class Catelog2Vo {
 
-    private String catalog1Id; //一级父分类
-    private List<Catalog3Vo> catalog3List; // 3级子分类
+    //一级父分类
+    private String catalog1Id;
+    // 3级子分类
+    private List<Catalog3Vo> catalog3List;
     private String id;
     private String name;
-//    private Catalog3Vo catalog3Vo;
 
-
-    @NoArgsConstructor
-    @AllArgsConstructor
-    @Data
-    public static class Catalog3Vo {
-        private String catalog2Id;//父分类 2级分类id
-        private String id;
-        private String name;
-    }
 }
