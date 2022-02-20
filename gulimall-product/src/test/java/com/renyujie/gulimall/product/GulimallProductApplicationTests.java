@@ -12,7 +12,11 @@ import com.renyujie.gulimall.product.service.CategoryService;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
+import org.redisson.api.RedissonClient;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.test.context.junit4.SpringRunner;
 import javax.annotation.Resource;
 import java.io.FileInputStream;
@@ -20,6 +24,7 @@ import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
@@ -32,6 +37,13 @@ class GulimallProductApplicationTests {
 	OSSClient ossClient;
 	@Resource
 	CategoryService categoryService;
+	@Resource
+	StringRedisTemplate stringRedisTemplate;
+	@Resource
+	RedissonClient redissonClient;
+
+
+
 
 	@Test
 	public void contextLoads() {
@@ -75,5 +87,33 @@ class GulimallProductApplicationTests {
 		log.info("完整路径：{}", Arrays.asList(catelogPath));
 
 	}
+
+	//	测试redis
+	@Test
+	public void testStringRedisTemplate(){
+		//hello world
+		ValueOperations<String, String> ops = stringRedisTemplate.opsForValue();
+
+		//保存
+		ops.set("hello", "world_" + UUID.randomUUID().toString());
+
+		//查询
+		String hello = ops.get("hello");
+		System.out.println("之前保存的数据是：" + hello);
+	}
+
+
+	/**
+	 * @Description: 测试redisson
+	 */
+	@Test
+	public void testRedissonClient(){
+		System.out.println(redissonClient);
+	}
+
+
+
+
+
 
 }

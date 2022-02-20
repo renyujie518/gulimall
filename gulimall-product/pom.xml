@@ -76,6 +76,79 @@
 			<artifactId>spring-boot-starter-thymeleaf</artifactId>
 		</dependency>
 
+<!--		引入redis-->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-redis</artifactId>
+		</dependency>
+
+
+		<!-- 在视屏中 p154压测出现产生堆外内存溢出：OutOfDirectMemoryError异常
+     1）springboot2.0以后默认使用lettuce作为操作redis的客户端。他使用netty进行网络通信
+     2）lettuce的bug导致netty堆外内存溢出 -Xmx1024m；netty如果没有指定堆外内存，默认使用-Xmx1024m，跟jvm设置的一样【迟早会出异常】
+      可以通过-Dio.netty.maxDirectMemory进行设置【仍然会异常】
+      解决方案：不能使用-Dio.netty.maxDirectMemory
+      1）升级lettuce客户端；【2.3.2已解决】【lettuce使用netty吞吐量很大】
+      2）切换使用jedis客户端【这里学习一下如何使用jedis，但是最后不选用】
+      主要学的是发现问题的思想和源码的设计模式
+
+      然后摘录几个弹幕观点（仅供参考）：
+      1.注意redis需要开启持久化,否则服务器已关闭就没了
+      2.阿里云单核两G的吞吐量总是2，其实是云服务带宽不够用了【我自己压测也是这个结果。redis在阿里云上】
+      3.弹幕中反馈新版本已修复这个问题【所以最好的办法是升级版本】
+      4.改用jedis后报错的把压测线程数调小，传输数据量相对较大，大多数线程拿不到连接就超时了(connect time out错误)
+        改用jedis后报错的还可以去配置文件里把jedis的最大连接数和活动连接数调大，这样还能增加吞吐量
+        jedis的连接池放开到50左右合适           【jedis比较老 不如netty】
+
+		-->
+<!--		<dependency>-->
+<!--			<groupId>org.springframework.boot</groupId>-->
+<!--			<artifactId>spring-boot-starter-data-redis</artifactId>-->
+<!--			<exclusions>-->
+<!--				<exclusion>-->
+<!--					<groupId>io.lettuce</groupId>-->
+<!--					<artifactId>lettuce-core</artifactId>-->
+<!--				</exclusion>-->
+<!--			</exclusions>-->
+<!--		</dependency>-->
+<!--		-->
+<!--		<dependency>-->
+<!--			<groupId>redis.clients</groupId>-->
+<!--			<artifactId>jedis</artifactId>-->
+<!--		</dependency>-->
+
+		<!--整合redisson 作为分布式锁，分布式对象等功能框架-->
+		<dependency>
+			<groupId>org.redisson</groupId>
+			<artifactId>redisson</artifactId>
+			<version>3.12.0</version>
+		</dependency>
+
+		<!--整合SringCache 简化缓存开发-->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-cache</artifactId>
+		</dependency>
+
+		<!--属性提示工具 自创配置文件的时候就有提示了 -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-configuration-processor</artifactId>
+			<optional>true</optional>
+		</dependency>
+
+		<!-- 整合Spring Session完成session共享问题 微服务自治，就不放在common里了-->
+		<dependency>
+			<groupId>org.springframework.session</groupId>
+			<artifactId>spring-session-data-redis</artifactId>
+		</dependency>
+
+		<!--引入 actuator统计审计信息 配合sentinel management.endpoints.web.exposure.include=* -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-actuator</artifactId>
+		</dependency>
+
 	</dependencies>
 	<dependencyManagement>
 		<dependencies>
