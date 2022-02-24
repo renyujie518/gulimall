@@ -57,7 +57,7 @@ public class BrandController {
     }
 
     /**
-     *  根据id获取品牌信息
+     *  根据id获取品牌信息(search会调用)
      *
      * @param brandIds
      * @return

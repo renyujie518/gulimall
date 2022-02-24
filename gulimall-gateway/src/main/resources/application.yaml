@@ -50,10 +50,16 @@
 #          filters:
 #            - RewritePath=/api/(?<segment>.*),/renren-fast/$\{segment}
 #        #p140 服务器nginx过来的"gulimall"组到网关88端口  是依据host断言
-#由于优先匹配host 如果放置前面可能导致#商品服务失效  所以放置最后
+#        #由于优先匹配host 如果放置前面可能导致#商品服务失效  所以放置最后
 #        - id: gulimall_host_route
 #            uri: lb://gulimall-product
 #            predicates:
-#              - Host=**.gulimall.com
+#              - Host=gulimall.com
+#
+#        #search服务转发
+#        - id: gulimall_search_route
+#            uri: lb://gulimall-search
+#            predicates:
+#              - Host=search.gulimall.com
 #
 #

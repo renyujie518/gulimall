@@ -14,6 +14,7 @@ import com.renyujie.gulimall.product.vo.AttrRespVo;
 import com.renyujie.gulimall.product.vo.AttrVo;
 import org.apache.commons.lang.ArrayUtils;
 import org.springframework.beans.BeanUtils;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.util.Arrays;
@@ -151,6 +152,7 @@ public class AttrServiceImpl extends ServiceImpl<AttrDao, AttrEntity> implements
     /**
      * @Description:"规格参数"新增页面回显
      */
+    @Cacheable(value = "attr", key = "'attrInfo:'+#root.args[0]")
     @Override
     public AttrRespVo getAttrInfo(Long attrId) {
         AttrRespVo attrRespVo = new AttrRespVo();
