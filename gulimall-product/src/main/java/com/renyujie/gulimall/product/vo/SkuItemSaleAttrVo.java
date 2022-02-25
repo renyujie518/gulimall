@@ -6,9 +6,7 @@ import lombok.ToString;
 import java.util.List;
 
 /**
- * @author 孟享广
- * @date 2021-01-26 4:56 下午
- * @description
+   详情页 的  sku的销售属性组合
  */
 @ToString
 @Data

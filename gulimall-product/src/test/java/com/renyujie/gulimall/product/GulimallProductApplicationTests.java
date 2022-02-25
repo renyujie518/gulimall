@@ -5,10 +5,14 @@ import com.aliyun.oss.OSS;
 import com.aliyun.oss.OSSClient;
 import com.aliyun.oss.OSSClientBuilder;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.renyujie.gulimall.product.dao.AttrGroupDao;
+import com.renyujie.gulimall.product.dao.SkuSaleAttrValueDao;
 import com.renyujie.gulimall.product.entity.BrandEntity;
 import com.renyujie.gulimall.product.service.BrandService;
 
 import com.renyujie.gulimall.product.service.CategoryService;
+import com.renyujie.gulimall.product.vo.SkuItemSaleAttrVo;
+import com.renyujie.gulimall.product.vo.SpuItemAttrGroupVo;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
@@ -41,6 +45,10 @@ class GulimallProductApplicationTests {
 	StringRedisTemplate stringRedisTemplate;
 	@Resource
 	RedissonClient redissonClient;
+	@Resource
+	AttrGroupDao attrGroupDao;
+	@Resource
+	SkuSaleAttrValueDao skuSaleAttrValueDao;
 
 
 
@@ -111,7 +119,17 @@ class GulimallProductApplicationTests {
 		System.out.println(redissonClient);
 	}
 
+	@Test
+	public void testGetAttrGroupWithAttrsBySpuIdAndCatalogId(){
+		List<SpuItemAttrGroupVo> spuItemAttrGroupVos = attrGroupDao.getAttrGroupWithAttrsBySpuIdAndCatalogId(2L, 225L);
+		System.out.println("查询到的spu的规格参数信息" + spuItemAttrGroupVos);
+	}
 
+	@Test
+	public void  test(){
+		List<SkuItemSaleAttrVo> attrVos = skuSaleAttrValueDao.getSaleAttrBySpuId(2L);
+		System.out.println(attrVos);
+	}
 
 
 

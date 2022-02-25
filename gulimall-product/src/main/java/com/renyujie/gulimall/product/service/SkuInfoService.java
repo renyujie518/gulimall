@@ -3,9 +3,11 @@ package com.renyujie.gulimall.product.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.renyujie.common.utils.PageUtils;
 import com.renyujie.gulimall.product.entity.SkuInfoEntity;
+import com.renyujie.gulimall.product.vo.SkuItemVo;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 /**
  * sku信息
@@ -27,5 +29,10 @@ public interface SkuInfoService extends IService<SkuInfoEntity> {
      * @Description:  通过spuId获得对应的所有sku
      */
     List<SkuInfoEntity> getSkusById(Long spuId);
+
+    /**
+     * @Description: 返回sku详细信息
+     */
+    SkuItemVo item(Long skuId) throws ExecutionException, InterruptedException;
 }
 
