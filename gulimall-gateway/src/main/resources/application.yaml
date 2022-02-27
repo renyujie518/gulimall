@@ -62,4 +62,12 @@
 #            predicates:
 #              - Host=search.gulimall.com
 #
+#        #认证和登录服务
+#        - id: gulimall_auth_route
+#            uri: lb://gulimall-auth-server
+#            predicates:
+#              - Host=auth.gulimall.com
+#
+#
+#
 #

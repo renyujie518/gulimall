@@ -96,11 +96,14 @@
                 <li>
                     <a th:if="${session.loginUser!=null}">欢迎您: [[${session.loginUser == null
                         ?'':session.loginUser.nickname}]]</a>
-                    <a href="http://auth.gulimall.com/login.html" th:if="${session.loginUser==null}">欢迎您 ，请登录</a>
+<!--                    <a href="http://auth.gulimall.com/login.html" th:if="${session.loginUser==null}">欢迎您 ，请登录</a>-->
+                    <a href="http://127.0.0.1:20000/login.html" th:if="${session.loginUser==null}">欢迎您 ，请登录</a>
                 </li>
                 <li>
+<!--                    <a th:if="${session.loginUser == null}" class="li_2"-->
+<!--                       href="http://auth.gulimall.com/reg.html">免费注册</a>-->
                     <a th:if="${session.loginUser == null}" class="li_2"
-                       href="http://auth.gulimall.com/reg.html">免费注册</a>
+                       href="http://127.0.0.1:20000/reg.html">免费注册</a>
                 </li>
                 <span>|</span>
                 <li>

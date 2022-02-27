@@ -1,0 +1,13 @@
+#spring:
+#  cloud:
+#    alicloud:
+#      access-key: LTAI5t8tQGAjN4MpNrfv2k2Q
+#        secret-key: 66p27jI71YB6KmZG3b48jALPh0o6Dy
+#        oss:
+#          endpoint: oss-cn-beijing.aliyuncs.com
+#          bucket: gulimall-ryj
+#      sms:
+#        host: https://smssend.shumaidata.com
+#        path: /sms/send
+#        template-id: M09DD535F4
+#        appcode: f2ecc815f63d46eeb5aa82ad974817af

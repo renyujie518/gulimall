@@ -61,6 +61,12 @@
 				</exclusion>
 			</exclusions>
 		</dependency>
+<!--		配置注释管理器提示  SmsComponent中用了@ConfigurationProperties(prefix = "spring.cloud.alicloud.sms")-->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-configuration-processor</artifactId>
+			<optional>true</optional>
+		</dependency>
 
 
 	</dependencies>

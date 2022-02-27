@@ -3,15 +3,16 @@ package com.renyujie.gulimall.member.controller;
 import java.util.Arrays;
 import java.util.Map;
 
+import com.renyujie.common.exception.BizCodeEnum;
+import com.renyujie.gulimall.member.exception.PhoneExistException;
+import com.renyujie.gulimall.member.exception.UsernameExistException;
 import com.renyujie.gulimall.member.feign.CouponFeignService;
+import com.renyujie.gulimall.member.vo.MemberLoginVo;
+import com.renyujie.gulimall.member.vo.MemberRegistVo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.context.config.annotation.RefreshScope;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.renyujie.gulimall.member.entity.MemberEntity;
 import com.renyujie.gulimall.member.service.MemberService;
@@ -114,5 +115,43 @@ public class MemberController {
 
         return R.ok();
     }
+
+    /**
+     * @Description: 保存会员信息（注册页）
+     */
+    @PostMapping("/regist")
+    public R regist(@RequestBody MemberRegistVo vo) {
+
+        //尝试注册  因为里面的regist方法用到了"异常机制"  所以要尝试捕捉
+        try {
+            memberService.regist(vo);
+        } catch (PhoneExistException e) {
+            //捕获了异常 返回失败信息
+            return R.error(BizCodeEnum.PHONE_EXISTS_EXCEPTION.getCode(), BizCodeEnum.PHONE_EXISTS_EXCEPTION.getMsg());
+        } catch (UsernameExistException e) {
+            return R.error(BizCodeEnum.USER_EXISTS_EXCEPTION.getCode(), BizCodeEnum.USER_EXISTS_EXCEPTION.getMsg());
+        }
+
+        //成功
+        return R.ok();
+    }
+    /**
+     * @Description: "登录页"  本站登录
+     *
+     */
+    @PostMapping("/login")
+    public R login(@RequestBody MemberLoginVo memberLoginVo) {
+
+        MemberEntity entity = memberService.login(memberLoginVo);
+        if (entity != null) {
+            //登录成功
+            //给远程调用我的服务返回->真正返回的数据 远程调用者要把这个entity放入session的
+            return R.ok().setData(entity);
+        }
+        //登录失败
+         return R.error(BizCodeEnum.LOGIN_ACCOUNT_PASSWORD_INVALID.getCode(), BizCodeEnum.LOGIN_ACCOUNT_PASSWORD_INVALID.getMsg());
+    }
+
+
 
 }

@@ -13,5 +13,9 @@ import org.apache.ibatis.annotations.Mapper;
  */
 @Mapper
 public interface MemberLevelDao extends BaseMapper<MemberLevelEntity> {
-	
+
+    /**
+     * @Description: 获取默认等级：普通会员  default_status=1
+     */
+    MemberLevelEntity getDefaultLevel();
 }
