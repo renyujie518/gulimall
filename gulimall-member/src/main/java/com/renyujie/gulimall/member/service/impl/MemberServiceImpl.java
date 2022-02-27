@@ -1,14 +1,21 @@
 package com.renyujie.gulimall.member.service.impl;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
+import com.renyujie.common.utils.HttpUtils;
 import com.renyujie.gulimall.member.dao.MemberLevelDao;
 import com.renyujie.gulimall.member.entity.MemberLevelEntity;
 import com.renyujie.gulimall.member.exception.PhoneExistException;
 import com.renyujie.gulimall.member.exception.UsernameExistException;
 import com.renyujie.gulimall.member.vo.MemberLoginVo;
 import com.renyujie.gulimall.member.vo.MemberRegistVo;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.renyujie.gulimall.member.vo.SocialUser;
+import org.apache.http.HttpResponse;
+import org.apache.http.util.EntityUtils;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.util.HashMap;
 import java.util.Map;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -63,6 +70,7 @@ public class MemberServiceImpl extends ServiceImpl<MemberDao, MemberEntity> impl
 
         //其他默认信息
         memberEntity.setUsername(memberRegistVo.getUserName());
+        memberEntity.setNickname(memberRegistVo.getUserName());
         memberEntity.setMobile(memberRegistVo.getPhone());
 
         //把这个大对象保存到数据库MemberEntity表中
@@ -124,6 +132,61 @@ public class MemberServiceImpl extends ServiceImpl<MemberDao, MemberEntity> impl
             }
         }
 
+    }
+
+
+    /**
+     * @Description: "登录页"  社交gitee登录
+     */
+    @Override
+    public MemberEntity giteeLogin(SocialUser vo) throws Exception {
+        Long finallId = 0L;
+        /**
+         * 观察发现  gitee返回的数据中没有uid  只有access_token 所以从远端接收过来的vo一定没有uid
+         * 为了和老师一致 这里先用gitee的openApi再去查到当前用户的uid
+         * 参考：https://gitee.com/api/v5/swagger#/getV5User
+         */
+        try {
+            Map<String, String> params = new HashMap<>();
+            params.put("access_token", vo.getAccess_token());
+            HttpResponse response = HttpUtils.doGet("https://gitee.com", "/api/v5/user", "get", null, params);
+            if (response.getStatusLine().getStatusCode() == 200) {
+                String giteeWithUid2String = EntityUtils.toString(response.getEntity());
+                JSONObject giteeInfo = JSON.parseObject(giteeWithUid2String);
+                String socialUid = giteeInfo.getString("id");
+                vo.setSocialUid(socialUid);
+
+                //以下的vo都带有socialUid  至于数据库中到底有没有（新/老用户）再来判断
+                MemberEntity member = this.getOne(new QueryWrapper<MemberEntity>().eq("social_uid", vo.getSocialUid()));
+                if (member != null) {
+                    // 说明已经注册过，更新令牌、令牌过期时间（socialUid本来就有，不动）
+                    System.out.println("非首次登录本站");
+                    MemberEntity newMember = new MemberEntity();
+                    newMember.setId(member.getId());
+                    newMember.setAccessToken(vo.getAccess_token());
+                    newMember.setExpiresIn(vo.getExpires_in());
+                    this.updateById(member);
+                    finallId = member.getId();
+                } else {
+                    // 第一次登录，需要注册
+                    System.out.println("首次登录本站");
+                    MemberEntity newMember = new MemberEntity();
+                    newMember.setSocialUid(vo.getSocialUid());
+                    //这里只保存了name  其实像是性别，年龄什么的都可以保存  这里懒得做
+                    newMember.setNickname(giteeInfo.getString("name"));
+                    newMember.setSocialUid(vo.getSocialUid());
+                    newMember.setAccessToken(vo.getAccess_token());
+                    newMember.setExpiresIn(vo.getExpires_in());
+                    this.save(newMember);
+                    finallId = newMember.getId();
+                }
+            }
+        } catch (Exception e) {
+            throw e;
+        }
+        //不管是第一次登录还是已登录 经过上述步骤  数据库中的这条信息一定是最新的  都是当前用户信息
+        // 由于auth服务和前端需要用到MemberEntity的信息  由于这个表不大  所以再查一次即可
+        return this.baseMapper.selectById(finallId);
     }
 
 

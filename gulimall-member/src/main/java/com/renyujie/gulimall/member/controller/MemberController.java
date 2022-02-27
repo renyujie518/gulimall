@@ -9,6 +9,7 @@ import com.renyujie.gulimall.member.exception.UsernameExistException;
 import com.renyujie.gulimall.member.feign.CouponFeignService;
 import com.renyujie.gulimall.member.vo.MemberLoginVo;
 import com.renyujie.gulimall.member.vo.MemberRegistVo;
+import com.renyujie.gulimall.member.vo.SocialUser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.context.config.annotation.RefreshScope;
@@ -150,6 +151,21 @@ public class MemberController {
         }
         //登录失败
          return R.error(BizCodeEnum.LOGIN_ACCOUNT_PASSWORD_INVALID.getCode(), BizCodeEnum.LOGIN_ACCOUNT_PASSWORD_INVALID.getMsg());
+    }
+
+    /**
+     * @Description: "登录页"  社交gitee登录
+     */
+    @PostMapping("/gitee-login")
+    public R giteeLogin(@RequestBody SocialUser vo) throws Exception {
+        MemberEntity entity = memberService.giteeLogin(vo);
+        if (entity != null) {
+            //登录成功
+            //给远程调用我的服务返回->真正返回的数据 远程调用者要把这个entity放入session的
+            return R.ok().setData(entity);
+        }
+        //登录失败
+        return R.error(BizCodeEnum.LOGIN_ACCOUNT_PASSWORD_INVALID.getCode(), BizCodeEnum.LOGIN_ACCOUNT_PASSWORD_INVALID.getMsg());
     }
 
 

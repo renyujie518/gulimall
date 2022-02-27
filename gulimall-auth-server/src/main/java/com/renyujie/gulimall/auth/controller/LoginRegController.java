@@ -153,13 +153,14 @@ public class LoginRegController {
      */
     @PostMapping("/login")
     public String login(UserLoginVo userLoginVo,
-                        RedirectAttributes redirectAttributes) {
+                        RedirectAttributes redirectAttributes,
+                        HttpSession session) {
         //远程登录 调用member服务
         R r = memberFeignService.login(userLoginVo);
         if (r.getCode() == 0) {
             //远程登录成功，将远程服务返回的entity放入session中
             MemberResVo memberResVo = r.getData("data", new TypeReference<MemberResVo>(){});
-            //session.setAttribute(AuthServiceConstant.LOGIN_USER, memberResVo);
+            session.setAttribute(AuthServiceConstant.LOGIN_USER, memberResVo);
             return "redirect:http://127.0.0.1:10000/";
         }else {
             //远程登录失败

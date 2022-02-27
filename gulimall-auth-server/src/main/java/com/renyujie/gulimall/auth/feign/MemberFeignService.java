@@ -2,13 +2,12 @@ package com.renyujie.gulimall.auth.feign;
 
 
 import com.renyujie.common.utils.R;
-import com.renyujie.gulimall.auth.vo.MemberRegistVo;
-import com.renyujie.gulimall.auth.vo.SocialUser;
-import com.renyujie.gulimall.auth.vo.UserLoginVo;
+import com.renyujie.gulimall.auth.vo.*;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 
 /**
    远程的会员服务
@@ -28,6 +27,6 @@ public interface MemberFeignService {
 
     //社交
     //社交登录
-    @PostMapping("/member/member/oauth/login")
-    R oauthLogin(@RequestBody SocialUser vo) throws Exception;
+    @PostMapping("/member/member/gitee-login")
+    R giteeLogin(@RequestBody GiteeInfoWithAccessTokenFromCode giteeInfoWithAccessTokenFromCode);
 }

@@ -7,6 +7,7 @@ import com.renyujie.gulimall.member.exception.PhoneExistException;
 import com.renyujie.gulimall.member.exception.UsernameExistException;
 import com.renyujie.gulimall.member.vo.MemberLoginVo;
 import com.renyujie.gulimall.member.vo.MemberRegistVo;
+import com.renyujie.gulimall.member.vo.SocialUser;
 
 import java.util.Map;
 
@@ -40,5 +41,10 @@ public interface MemberService extends IService<MemberEntity> {
      *
      */
     MemberEntity login(MemberLoginVo memberLoginVo);
+
+    /**
+     * @Description: "登录页"  社交gitee登录
+     */
+    MemberEntity giteeLogin(SocialUser vo) throws Exception;
 }
 
