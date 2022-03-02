@@ -34,6 +34,11 @@
             -- 要使用groupby 要么select后查询的列在分组中有，要么这些列采用group_concat组连接
             GROUP BY ssav.attr_id,ssav.attr_name,ssav.attr_value
     </select>
+    <select id="getSkuSaleAttrValuesAsStringList" resultType="java.lang.String">
+        SELECT CONCAT(attr_name,": ",attr_value)
+        FROM `pms_sku_sale_attr_value`
+        WHERE sku_id = ${skuId}
+    </select>
 
 
 </mapper>

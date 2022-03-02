@@ -1,14 +1,11 @@
 package com.renyujie.gulimall.product.app;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.renyujie.gulimall.product.entity.SkuSaleAttrValueEntity;
 import com.renyujie.gulimall.product.service.SkuSaleAttrValueService;
@@ -79,6 +76,15 @@ public class SkuSaleAttrValueController {
 		skuSaleAttrValueService.removeByIds(Arrays.asList(ids));
 
         return R.ok();
+    }
+
+
+    /**
+     * @Description: 依据skuid获取sku的销售属性组合（返回值是List<String>） cart中远程调用  attr_name:attr_value
+     */
+    @GetMapping("/stringlist/{skuId}")
+    public List<String> getSkuSaleAttrValues(@PathVariable("skuId") Long skuId) {
+        return skuSaleAttrValueService.getSkuSaleAttrValuesAsStringList(skuId);
     }
 
 }

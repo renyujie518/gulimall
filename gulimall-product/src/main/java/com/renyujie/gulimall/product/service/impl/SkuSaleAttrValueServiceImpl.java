@@ -39,4 +39,13 @@ public class SkuSaleAttrValueServiceImpl extends ServiceImpl<SkuSaleAttrValueDao
 
     }
 
+    /**
+     * @Description: 依据skuid获取sku的销售属性组合（返回值是List<String>） cart中远程调用  attr_name:attr_value
+     */
+    @Override
+    public List<String> getSkuSaleAttrValuesAsStringList(Long skuId) {
+
+        return this.baseMapper.getSkuSaleAttrValuesAsStringList(skuId);
+    }
+
 }
