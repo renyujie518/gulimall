@@ -7,9 +7,11 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import javax.annotation.Resource;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
@@ -120,6 +122,17 @@ public class cartController {
         cartService.deleteItem(skuId);
         //相当于在刷新获取一次购物车页面 展示
         return "redirect:http://127.0.0.1:40000/cart.html";
+    }
+
+    /**
+     * 给远程gulimall-order调用
+     * 获取当前用户所有购物项（已选中的）
+     */
+    @ResponseBody
+    @GetMapping("/currentUserItems")
+    public List<CartItem> currentUserItems() {
+        List<CartItem> items = cartService.getUserCartItems();
+        return items;
     }
 
 

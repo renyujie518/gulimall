@@ -73,3 +73,9 @@
 #            uri: lb://gulimall-cart
 #            predicates:
 #              - Host=cart.gulimall.com
+#
+#        #订单
+#        - id: gulimall_order_route
+#            uri: lb://gulimall-order
+#            predicates:
+#              - Host=order.gulimall.com

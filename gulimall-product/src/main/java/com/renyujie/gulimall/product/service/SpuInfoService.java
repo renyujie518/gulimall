@@ -35,5 +35,10 @@ public interface SpuInfoService extends IService<SpuInfoEntity> {
      * @Description: 商品上架  对应"spu管理"的"上架"按钮 同时存储sku到es中
      */
     void up(Long spuId);
+
+    /**
+     * 根据skuId返回spu信息 order服务调用
+     */
+    SpuInfoEntity getSpuInfoBuSkuId(Long skuId);
 }
 

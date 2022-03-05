@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -168,7 +169,7 @@ public class CartServiceImpl implements CartService {
     }
 
     /**
-     * @Description: 工具方法 输入用户状态（登录/游客），从redis中获取购物车
+     * @Description: 工具方法 输入用户状态（登录/游客），从redis中获取购物车 商品项
      * 输入大目录cartKey用户身份  返回该用户下所有购物项List<CartItem>
      */
     private List<CartItem> getCartItems(String cartKey) {
@@ -235,6 +236,36 @@ public class CartServiceImpl implements CartService {
         BoundHashOperations<String, Object, Object> cartOps = getCartOps();
         //跟新redis
         cartOps.delete(skuId.toString());
+    }
+
+    /**
+     * 给远程gulimall-order调用
+     * 获取当前用户所有购物项（已选中的）
+     */
+    @Override
+    public List<CartItem> getUserCartItems() {
+        UserInfoTo userInfo = CartInterceptor.threadLocal.get();
+        if (userInfo.getUserId() == null) {
+            //说明没登录  没登录不允许结算 所以返回null
+            return null;
+        } else {
+            //登陆了
+            String cartKey = CART_PREFIX + userInfo.getUserId();
+            List<CartItem> cartItemList = getCartItems(cartKey);
+            //筛选商品项列表中  被"勾选"的   同时购物车中的陈列了很久  由于价格变动，一定要获取到最新的价格
+            List<CartItem> res = cartItemList.stream()
+                    .filter(item -> item.getCheck())
+                    .map(itemHasChecked -> {
+                        R r = productFeignService.getPrice(itemHasChecked.getSkuId());
+                        if (r.getCode() == 0) {
+                            String lastPrice = (String) r.get("data");
+                            itemHasChecked.setPrice(new BigDecimal(lastPrice));
+                        }
+                        return itemHasChecked;
+                    }
+            ).collect(Collectors.toList());
+            return res;
+        }
     }
 
 

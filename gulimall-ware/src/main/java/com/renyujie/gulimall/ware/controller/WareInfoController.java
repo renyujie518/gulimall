@@ -3,12 +3,9 @@ package com.renyujie.gulimall.ware.controller;
 import java.util.Arrays;
 import java.util.Map;
 
+import com.renyujie.gulimall.ware.vo.FareVo;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.renyujie.gulimall.ware.entity.WareInfoEntity;
 import com.renyujie.gulimall.ware.service.WareInfoService;
@@ -79,6 +76,15 @@ public class WareInfoController {
 		wareInfoService.removeByIds(Arrays.asList(ids));
 
         return R.ok();
+    }
+
+    /**
+     * 根据用户的收货地址计算运费
+     */
+    @GetMapping("/fare")
+    public R getFare(@RequestParam("addrId") Long addrId) {
+        FareVo vo = wareInfoService.getFare(addrId);
+        return R.ok().setData(vo);
     }
 
 }

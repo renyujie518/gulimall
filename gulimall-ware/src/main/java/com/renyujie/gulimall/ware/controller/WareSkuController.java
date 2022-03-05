@@ -4,7 +4,10 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
+import com.renyujie.common.exception.BizCodeEnum;
+import com.renyujie.common.exception.NoStockException;
 import com.renyujie.gulimall.ware.vo.SkuHasStockVo;
+import com.renyujie.gulimall.ware.vo.WareSkuLockVo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -80,13 +83,30 @@ public class WareSkuController {
     }
 
     /**
-     * @Description: 批量查询sku是否有库存
+     * @Description: order调用
+     * 批量查询sku是否有库存
      */
     @PostMapping("/hasstock")
     public R getSkuHasStock(@RequestBody List<Long> skuIds) {
         //sku_id, stock（boolean）
         List<SkuHasStockVo> vos = wareSkuService.getSkuHasStock(skuIds);
         return R.ok().setData(vos);
+    }
+
+    /**
+     * 为某个订单锁定库存  order服务调用
+     */
+    @PostMapping("/lock/order")
+    public R orderLockStock(@RequestBody WareSkuLockVo vo) {
+
+        Boolean b = null;
+        try {
+            b = wareSkuService.orderLockStock(vo);
+            //没有异常  说明都解决了锁定库存 必定能执行到这 返回ok
+            return R.ok();
+        } catch (NoStockException e) {
+            return R.error(BizCodeEnum.NO_STOCK_EXCEPTION.getCode(), BizCodeEnum.NO_STOCK_EXCEPTION.getMsg());
+        }
     }
 
 }

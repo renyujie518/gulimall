@@ -3,6 +3,7 @@ package com.renyujie.gulimall.cart.service;
 import com.renyujie.gulimall.cart.vo.Cart;
 import com.renyujie.gulimall.cart.vo.CartItem;
 
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 /**
@@ -48,4 +49,10 @@ public interface CartService {
      * 删除购物车里的某一项
      */
     void deleteItem(Long skuId);
+
+    /**
+     * 给远程gulimall-order调用
+     * 获取当前用户所有购物项（已选中的）
+     */
+    List<CartItem> getUserCartItems();
 }

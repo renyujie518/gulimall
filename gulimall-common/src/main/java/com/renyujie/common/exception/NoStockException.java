@@ -4,21 +4,19 @@ import lombok.Getter;
 import lombok.Setter;
 
 /**
- *
- * @author yaoxinjia
+ 锁库存时没有任何仓库有库存  异常
  */
-@Getter
-@Setter
 public class NoStockException extends RuntimeException {
-    private Long skuId;
 
-    public NoStockException(Long skuId) {
-        super("商品id："+ skuId + "库存不足！");
+    @Getter
+    @Setter
+    private Long SkuId;
+
+    public NoStockException(Long SkuId) {
+        super("商品ID：" + SkuId + ":没有足够的库存");
     }
 
-    public NoStockException(String msg) {
-        super(msg);
+    public NoStockException(String msg1) {
+        super(msg1);
     }
-
-
 }
