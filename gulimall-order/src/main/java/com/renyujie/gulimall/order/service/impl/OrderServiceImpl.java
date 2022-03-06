@@ -2,6 +2,7 @@ package com.renyujie.gulimall.order.service.impl;
 
 import com.alibaba.fastjson.TypeReference;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
+import com.renyujie.common.dto.mq.OrderTo;
 import com.renyujie.common.exception.NoStockException;
 import com.renyujie.common.utils.R;
 import com.renyujie.common.vo.MemberResVo;
@@ -16,6 +17,7 @@ import com.renyujie.gulimall.order.interceptor.LoginUserInterceptor;
 import com.renyujie.gulimall.order.service.OrderItemService;
 import com.renyujie.gulimall.order.vo.*;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
@@ -216,11 +218,23 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
                 if (r.getCode() == 0) {
                     //锁成功 订单创建成功 最终要返回submitOrderResponseVo
                     submitOrderResponseVo.setOrder(orderCreatTo.getOrder());
-                    //TODO 8 远程扣减积分
-                    //库存成功了，但是网络原因超时了，订单回滚，库存不回滚
-                    //int i = 1 / 0;//模拟积分系统异常
-                    //TODO 9 订单创建成功，发消息给MQ
-                    //rabbitTemplate.convertAndSend("order-event-exchange", "order.create.order", orderCreatTo.getOrder());
+                    //TODO 8 远程扣减积分（模拟，本次不做）
+                    /**
+                     情况1：远程库存执行成功了，但是网络原因返回超时了（timeout异常）但本处的订单服务感受到异常了，减积分不执行，订单回滚->订单&库存不一致
+                     情况2：积分系统异常导致订单回滚，库存不回滚（即远程服务已经执行过了，库存服务该锁定都锁定了）-> 订单&库存不一致,减积分回滚
+
+                     解决方法1：
+                     本地事务只能控制自己的回宫  控制不了别的服务回滚  seata(详见文档 p286学习  本项目没有使用，由于锁太多)
+
+                     解决方法2：
+                     柔性事务-可靠消息+最终一致性方案（异步确保型)
+
+                     **/
+                    //模拟积分系统异常
+                    //int i = 1 / 0;
+
+                    /** 9 订单创建成功，发消息给MQ**/
+                    rabbitTemplate.convertAndSend("order-event-exchange", "order.create.order", orderCreatTo.getOrder());
                     return submitOrderResponseVo;
                 } else {
                     //锁定失败  code设置为3 同时r里也封装了msg  （注意 这里抛异常会使@Transactional生效 继而回滚saveOrder）
@@ -427,5 +441,53 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
         //保存第2个属性到数据库
         List<OrderItemEntity> orderItems = orderCreatTo.getOrderItems();
         orderItemService.saveBatch(orderItems);
+    }
+
+    /**
+     * @description 远程库存服务调用  按照订单号查询订单详情
+     */
+    @Override
+    public OrderEntity getOrderByOrderSn(String orderSn) {
+
+        OrderEntity orderEntity = this.getOne(new QueryWrapper<OrderEntity>().eq("order_sn", orderSn));
+        return orderEntity;
+    }
+
+
+    /**
+     * @description 订单解锁
+     * 收到过期的订单，关闭订单(实际上是修改OrderEntity.stuta的状态为4)
+     */
+    @Override
+    public void closeOrder(OrderEntity orderEntityFromMQ) {
+        /** 1. 由于只要是创建订单  就会发送mq  经过延时队列（为了实验设置为1min，实际应该是30min）后都会来到 order.release.order.queue从而被此方法监听到
+         *  并不是所有的订单都是过期的  所以先去数据库中查订单的状态   如果是过期才需要关闭   **/
+        OrderEntity orderEntityFromDB = this.getById(orderEntityFromMQ.getId());
+        //需要关单的状态是：待付款 0
+        if (orderEntityFromDB.getStatus().equals(OrderStatusEnum.CREATE_NEW.getCode())) {
+            //关单（注意  这里应该新建个对象  因为过去了30min才从mq中获得orderEntityFromMQ,这段时间可能导致orderEntityFromMQ与orderEntityFromDB不一样了）
+            OrderEntity updateOrder = new OrderEntity();
+            updateOrder.setId(orderEntityFromMQ.getId());
+            //设置为4：已取消
+            updateOrder.setStatus(OrderStatusEnum.CANCLED.getCode());
+            this.updateById(updateOrder);
+
+            /** 2. 为了实验方便 订单的延时是1min(代表1min过后closeOrder就会收到消息) 库存的延时是2min(订单有问题2min后会执行库存解锁)
+             * 但是假设订单创建->订单解锁 期间由于"消息延迟/订单服务器挂了执行此closeOrder有问题"导致 订单解锁在库存解锁之后
+             * 那么在解锁库存unLockStock方法中的针对场景2的判断就失效了 但是消息被消费了啊  相当于库存解锁失败
+             *
+             * 为解决这个问题   订单解锁的时候也发MQ  该订单解锁的消息会到stock.release.stock.queue，这样库存解锁就立马能感知到
+             * 详见/order/config/MyRabbitMQConfig.java的orderReleaseOtherBinding()
+             *
+             * 同时在ware服务也会做相应的处理  一旦感知到下面发的这个OrderTo类型的mq  立马执行解锁
+             * **/
+            OrderTo orderTo = new OrderTo();
+            BeanUtils.copyProperties(orderEntityFromDB, orderTo);
+            rabbitTemplate.convertAndSend("order-event-exchange", "order.release.other", orderTo);
+
+            //3 TODO 保证消息100%发送出去，每一个消息都做好日志记录 (给数据库保存每一个消息的详细信息) 定期扫描数据库 将失败的消息再发送一遍
+
+
+        }
     }
 }

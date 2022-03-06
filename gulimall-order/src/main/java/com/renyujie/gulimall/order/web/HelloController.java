@@ -17,6 +17,8 @@ import java.util.Date;
 @Controller
 public class HelloController {
 
+    @Autowired
+    RabbitTemplate rabbitTemplate;
 
     /**
      * @Description: 测试页面
@@ -26,5 +28,25 @@ public class HelloController {
         //System.out.println("http://127.0.0.1:9000/" + page + ".html");
         //return new StringBuilder().append("http://127.0.0.1:9000/").append(page).append(".html").toString();
         return page;
+    }
+
+
+
+    /**
+     * @Description: 使用延迟mq  模拟测试
+     */
+    @ResponseBody
+    @GetMapping("/test/creatPOrder")
+    public String creatPOrderTest() {
+        OrderEntity entity = new OrderEntity();
+        entity.setOrderSn("10010");
+        entity.setModifyTime(new Date());
+
+        //给MQ发消息
+        rabbitTemplate.convertAndSend(
+                "order-event-exchange",
+                "order.create.order",
+                entity);
+        return "ok";
     }
 }

@@ -32,5 +32,16 @@ public interface OrderService extends IService<OrderEntity> {
      * 前端以表单的方式提交 orderSubmitVo
      */
     SubmitOrderResponseVo submitOrder(OrderSubmitVo orderSubmitVo);
+
+
+    /**
+     * @description 远程库存服务调用  按照订单号查询订单详情
+     */
+    OrderEntity getOrderByOrderSn(String orderSn);
+
+    /**
+     * @description 收到过期的订单，关闭订单
+     */
+    void closeOrder(OrderEntity entity);
 }
 

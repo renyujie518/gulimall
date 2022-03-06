@@ -40,4 +40,10 @@ public interface WareSkuDao extends BaseMapper<WareSkuEntity> {
      * （stock_locked累加needLockNum,同时保证还有余量 即needLockNum不能超过余量）
      */
     Long lockSkuStockInThisWare(@Param("skuId") Long skuId, @Param("wareId") Long wareId, @Param("num") Integer needLockNum);
+
+
+    /**
+     * @description 最终的解锁方案 最终一致性方案中的补偿项  实际上就是把之前加上去的stock_locked再减回来
+     */
+    void unLockStock(@Param("skuId") Long skuId, @Param("wareId") Long wareId, @Param("num") Integer num);
 }

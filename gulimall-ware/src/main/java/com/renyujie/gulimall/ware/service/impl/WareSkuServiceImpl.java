@@ -1,12 +1,24 @@
 package com.renyujie.gulimall.ware.service.impl;
 
+import com.alibaba.fastjson.TypeReference;
+import com.renyujie.common.dto.mq.OrderTo;
+import com.renyujie.common.dto.mq.StockDetailTo;
+import com.renyujie.common.dto.mq.StockLockedTo;
 import com.renyujie.common.exception.NoStockException;
 import com.renyujie.common.utils.R;
+import com.renyujie.gulimall.ware.entity.WareOrderTaskDetailEntity;
+import com.renyujie.gulimall.ware.entity.WareOrderTaskEntity;
+import com.renyujie.gulimall.ware.feign.OrderFeignService;
 import com.renyujie.gulimall.ware.feign.ProductFeignService;
+import com.renyujie.gulimall.ware.service.WareOrderTaskDetailService;
+import com.renyujie.gulimall.ware.service.WareOrderTaskService;
 import com.renyujie.gulimall.ware.vo.OrderItemVo;
+import com.renyujie.gulimall.ware.vo.OrderVo;
 import com.renyujie.gulimall.ware.vo.SkuHasStockVo;
 import com.renyujie.gulimall.ware.vo.WareSkuLockVo;
 import lombok.Data;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -34,6 +46,17 @@ public class WareSkuServiceImpl extends ServiceImpl<WareSkuDao, WareSkuEntity> i
 
     @Autowired
     ProductFeignService productFeignService;
+    @Autowired
+    WareOrderTaskService wareOrderTaskService;
+
+    @Autowired
+    WareOrderTaskDetailService wareOrderTaskDetailService;
+
+    @Autowired
+    RabbitTemplate rabbitTemplate;
+    @Resource
+    OrderFeignService orderFeignService;
+
 
 
     @Override
@@ -127,6 +150,11 @@ public class WareSkuServiceImpl extends ServiceImpl<WareSkuDao, WareSkuEntity> i
     @Transactional(rollbackFor = NoStockException.class)
     @Override
     public Boolean orderLockStock(WareSkuLockVo vo) {
+        /** 0 保存库存工作单的详情 实际上是操作wms_ware_order_task 主要存了OrderSn
+         * 相当于冗余表 用于追溯订单信息 这个订单要发生锁库存**/
+        WareOrderTaskEntity wareOrderTaskEntity = new WareOrderTaskEntity();
+        wareOrderTaskEntity.setOrderSn(vo.getOrderSn());
+        wareOrderTaskService.save(wareOrderTaskEntity);
 
         /**1、 本应该按照下单的收货地址，找到一个最近的仓库，锁定库存
          * 但此处不做这么复杂的逻辑 找到每个商品在哪个仓库都有库存（一个商品可能在多个仓库都有库存）
@@ -159,7 +187,28 @@ public class WareSkuServiceImpl extends ServiceImpl<WareSkuDao, WareSkuEntity> i
                 Long count = this.baseMapper.lockSkuStockInThisWare(skuId, wareId, needLockNum);
                 if (count == 1) {
                     skuHasStockedFlag = true;
-                    //TODO 告诉MQ锁定成功 发消息
+                    /**  3. 一旦该sku锁库存成功 保存锁成功了的sku在锁库存中发生的所有详细消息 实际上操作wms_ware_order_task_detial
+                         里面主要保存了该sku发生锁库存的详细信息  包括发生锁库存的sku,发生锁库存的wareId,发生锁库存sku的状态(1-已锁定  2-已解锁  3-扣减)**/
+                    WareOrderTaskDetailEntity taskDetailEntity = new WareOrderTaskDetailEntity(null, skuId, "", needLockNum, wareOrderTaskEntity.getId(), wareId, 1);
+                    wareOrderTaskDetailService.save(taskDetailEntity);
+
+                    /**  4. 一旦该sku锁库存成功  告诉MQ锁定成功 发消息  将当前sku锁定了几件等等消息（详见StockLockedTo.class）发出去
+                     * 一旦需要解锁 会触发unLockStock
+                     *
+                     * 这里注意 如果该sku锁库存失败 前面保存的工作单（wareOrderTaskEntity）的信息就回滚了。
+                     * 发送出去的消息中是wareOrderTaskEntity的id，即使要解锁记录,即在unLockStock的逻辑中，
+                     * 由于去数据库查不到wms_ware_order_task中的ID（事务保证回滚了嘛），所以unLockStock是无法生效的
+                     * 所以  在这里 好像是ku锁库存成功/失败了都发消息了  但实际一分析  失败了也发mq不会导致问题
+                     * 但这种实现本身就不合理 所以在mq发出的消息stockLockedTo中要包含该sku在锁库存中发生的所有详细消息
+                     * 这样防止回滚以后找不到需要的回滚数据（即stockLockedTo），因为我可以从mq的消息中取啊  不一定非要去查表
+                     *
+                     **/
+                    StockLockedTo stockLockedTo = new StockLockedTo();
+                    stockLockedTo.setId(wareOrderTaskEntity.getId());
+                    StockDetailTo stockDetailTo = new StockDetailTo();
+                    BeanUtils.copyProperties(taskDetailEntity, stockDetailTo);
+                    stockLockedTo.setDetailTo(stockDetailTo);
+                    rabbitTemplate.convertAndSend("stock-event-exchange", "stock.locked", stockLockedTo);
 
                     //验证该仓库下是否就有足够的的库存就把sku.num干掉了，也不必再查别的仓库,跳出针对仓库的循环
                     break;
@@ -184,6 +233,103 @@ public class WareSkuServiceImpl extends ServiceImpl<WareSkuDao, WareSkuEntity> i
         private Integer num;
         //哪些仓库有库存
         private List<Long> wareId;
+    }
+
+
+
+    /**
+     * 库存解锁的场景1
+     下订单成功，库存锁定成功，接下来的业务调用失败，导致订单回滚。之前锁定的库存就要自动解锁
+     * 库存解锁的场景2
+     下订单成功，订单过期，没有支付被系统自动取消/被用户手动取消（OrderEntity.statu=4）
+
+     stockLockedTo就是上一个方法  锁成功了的sku在锁库存中发生的所有详细消息+库存工作单id
+     */
+    @Override
+    public void unLockStock(StockLockedTo stockLockedTo) {
+        StockDetailTo orderTaskDetailTo = stockLockedTo.getDetailTo();
+
+        /**1.查询数据库的锁库存的详细消息
+         * 有 证明 库存锁定OK  执行解锁  但是还是要判定订单的状态
+         * 没有 库存锁定失败，代表上一步的 wareOrderTaskDetailService.save执行了回滚  就不存在库存解锁的需求  无需解锁**/
+        WareOrderTaskDetailEntity wareOrderTaskDetailEntity = wareOrderTaskDetailService.getById(orderTaskDetailTo.getId());
+        if (wareOrderTaskDetailEntity != null) {
+            //有 证明 库存锁定OK
+            /** 2. 库存不能随便解锁 本场景是解决订单与库存的回滚不一致问题 所以再次查看订单的状况
+             *    2.1 查询没有这个订单  说明发生了库存解锁的场景1 解锁库存
+             *    2.2  查询到订单 但是订单是已取消(status=4) 说明发生场景2  解锁库存   没取消不能解锁（用户只是等会付款）  **/
+            Long orderTaskId = stockLockedTo.getId();
+            WareOrderTaskEntity wareOrderTaskEntity = wareOrderTaskService.getById(orderTaskId);
+            String orderSn = wareOrderTaskEntity.getOrderSn();
+            //根据订单号 远程查询订单详情（主要关心的是里面的statu字段的信息）
+            R r = orderFeignService.getOrderStatus(orderSn);
+            if (r.getCode() == 0) {
+                OrderVo orderVo = r.getData(new TypeReference<OrderVo>() {});
+                //订单不存在||订单是取消状态 解锁库存  status: 4->已关闭（对应场景2）
+                if (orderVo == null || orderVo.getStatus() == 4) {
+
+                    /** 3. 再去检查数据库中的wareOrderTaskDetailEntity 中的工作单详情中的状态  状态为1(已锁定)
+                     *  代表此时恰好发生场景1中的库存锁定成功，但是 订单不存在或者订单取消 最终解锁库存 **/
+                    // 当前工作单详情，状态为1(已锁定)
+                    if (wareOrderTaskDetailEntity.getLockStatus() == 1) {
+                        //实际的解锁库存
+                        unLockStock(orderTaskDetailTo.getSkuId(), orderTaskDetailTo.getWareId(), orderTaskDetailTo.getSkuNum(), orderTaskDetailTo.getId());
+                    }
+                }
+            } else {
+                /** 4. 远程查询订单详情失败  将导致本方法解锁库存失败  把异常抛出去
+                 *     在库存服务中开启了manual手动确认机制防止消息丢失
+                 *     把异常抛上去 消息拒绝重新放入队列 所以这个消息会继续被消费解锁（重试解锁）**/
+                throw new RuntimeException("远程订单服务失败");
+            }
+
+        } else {
+            /** 5. 对应1  没有库存单 无需解锁  但是完成unLockStock方法了 回调到StockReleaseListener的37行，在执行basicAck
+             *  代表这个mq消息已经被消费了（相当于监听到一个无用消息）**/
+        }
+    }
+
+
+    /**
+     * 防止订单服务卡顿，导致库存订单状态一直改变不了为4（已取消），库存消息优先到，查订单状态，查到的是新建状态0
+     * 这会导致上面的解锁服务什么都不做就走了，但是该mq已消费，导致这个取消的但是卡顿到的订单，永远不能解锁库存
+     *
+     * 即在处理OrderServiceImpl#closeOrder问题
+     *
+     * 执行了下面这个方法  立即解锁了库存  上面的解锁库存的方式相当于一种软补充
+     * 两个方法互为补充 上一个解锁方法幂等的原因是在真正执行解库存的时候判断了很多条件
+     * 包括"订单不存在||订单是取消状态"+"当前工作单详情，状态为1(已锁定)"所以也不会重复解锁库存
+     */
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void unLockStock(OrderTo orderTo) {
+        String orderSn = orderTo.getOrderSn();
+        //查一下最新的状态，防止重复解锁库存
+        WareOrderTaskEntity wareOrderTaskEntity = wareOrderTaskService.getOrderTaskByOrderSn(orderSn);
+        Long wareOrderTaskId = wareOrderTaskEntity.getId();
+        //按照工作单Id，去wms_ware_order_task_detial找到所有没有解锁的库存（lock_status=1） 进行解锁
+        List<WareOrderTaskDetailEntity> entities = wareOrderTaskDetailService.list(
+                new QueryWrapper<WareOrderTaskDetailEntity>()
+                        .eq("task_id", wareOrderTaskId).eq("lock_status", 1));
+        for (WareOrderTaskDetailEntity entity : entities) {
+            unLockStock(entity.getSkuId(), entity.getWareId(), entity.getSkuNum(), entity.getId());
+        }
+    }
+
+
+    /**
+     * @description 最终的解锁方案 最终一致性方案中的补偿项
+     */
+    private void unLockStock(Long skuId, Long wareId, Integer num, Long taskDetailId) {
+
+        //库存恢复
+        this.baseMapper.unLockStock(skuId, wareId, num);
+        //更新库存工作详情单的状态
+        WareOrderTaskDetailEntity entity = new WareOrderTaskDetailEntity();
+        entity.setId(taskDetailId);
+        //变为已解锁（保证幂等）
+        entity.setLockStatus(2);
+        wareOrderTaskDetailService.updateById(entity);
     }
 
 

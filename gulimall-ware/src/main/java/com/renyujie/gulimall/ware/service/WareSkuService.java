@@ -1,6 +1,8 @@
 package com.renyujie.gulimall.ware.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.renyujie.common.dto.mq.OrderTo;
+import com.renyujie.common.dto.mq.StockLockedTo;
 import com.renyujie.common.utils.PageUtils;
 import com.renyujie.gulimall.ware.entity.WareSkuEntity;
 import com.renyujie.gulimall.ware.vo.SkuHasStockVo;
@@ -42,5 +44,20 @@ public interface WareSkuService extends IService<WareSkuEntity> {
      * 为某个订单锁定库存  order服务调用
      */
     Boolean orderLockStock(WareSkuLockVo vo);
+
+
+    /**
+     * 库存解锁的场景1
+     下订单成功，库存锁定成功，接下来的业务调用失败，导致订单回滚。之前锁定的库存就要自动解锁
+     */
+    void unLockStock(StockLockedTo to);
+
+    /**
+     * 防止订单服务卡顿，导致库存订单状态一直改变不了为4（已取消），库存消息优先到，查订单状态，查到的是新建状态0
+     * 这会导致上面的解锁服务什么都不做就走了，但是该mq已消费，导致这个取消的但是卡顿到的订单，永远不能解锁库存
+     *
+     * 即在处理OrderServiceImpl#closeOrder问题
+     */
+    void unLockStock(OrderTo orderTo);
 }
 
