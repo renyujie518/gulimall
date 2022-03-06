@@ -3,9 +3,7 @@ package com.renyujie.gulimall.order.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.renyujie.common.utils.PageUtils;
 import com.renyujie.gulimall.order.entity.OrderEntity;
-import com.renyujie.gulimall.order.vo.OrderConfirmVo;
-import com.renyujie.gulimall.order.vo.OrderSubmitVo;
-import com.renyujie.gulimall.order.vo.SubmitOrderResponseVo;
+import com.renyujie.gulimall.order.vo.*;
 
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -43,5 +41,26 @@ public interface OrderService extends IService<OrderEntity> {
      * @description 收到过期的订单，关闭订单
      */
     void closeOrder(OrderEntity entity);
+
+    /**
+     * 构建当前订单的支付信息 PayVo
+     */
+    PayVo getPayOrder(String orderSn);
+
+    /**
+     * 给远程服务使用的
+     * 查询当前登录用户的所有订单详情数据（分页）
+     * @RequestBody 远程传输必须用这个
+     */
+    PageUtils queryPageWithItem(Map<String, Object> params);
+
+
+    /**
+     * 处理支付宝返回的数据
+     * <p>
+     * 只要我们收到了，支付宝给我们的一步的通知，告诉我订单支付成功
+     * 返回success，支付宝就再也不通知
+     */
+    String handlePayResult(PayAsyncVo payAsyncVo);
 }
 

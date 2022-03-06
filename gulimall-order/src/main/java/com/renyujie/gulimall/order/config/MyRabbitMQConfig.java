@@ -69,15 +69,15 @@ public class MyRabbitMQConfig {
     /**
      * **************下面全都是配置mq消息不丢失*****************
      */
-    @Primary
-    @Bean
-    public RabbitTemplate rabbitTemplate(ConnectionFactory connectionFactory) {
-        RabbitTemplate rabbitTemplate = new RabbitTemplate(connectionFactory);
-        this.rabbitTemplate = rabbitTemplate;
-        rabbitTemplate.setMessageConverter(messageConverter());
-        initRabbitTemplate();
-        return rabbitTemplate;
-    }
+    //@Primary
+    //@Bean
+    //public RabbitTemplate rabbitTemplate(ConnectionFactory connectionFactory) {
+    //    RabbitTemplate rabbitTemplate = new RabbitTemplate(connectionFactory);
+    //    this.rabbitTemplate = rabbitTemplate;
+    //    rabbitTemplate.setMessageConverter(messageConverter());
+    //    initRabbitTemplate();
+    //    return rabbitTemplate;
+    //}
 
     @PostConstruct
     public void initRabbitTemplate() {

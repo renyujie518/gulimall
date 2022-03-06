@@ -84,4 +84,16 @@ public class OrderController {
         OrderEntity entity = orderService.getOrderByOrderSn(orderSn);
         return R.ok().setData(entity);
     }
+
+    /**
+     * 给远程服务使用的
+     * 查询当前登录用户的所有订单详情数据（分页）
+     * @RequestBody 远程传输必须用这个
+     */
+    @PostMapping("/listWithItem")
+    public R listWithItem(@RequestBody Map<String, Object> params) {
+
+        PageUtils page = orderService.queryPageWithItem(params);
+        return R.ok().put("page", page);
+    }
 }
