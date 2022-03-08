@@ -1,8 +1,12 @@
 package com.renyujie.gulimall.product.service.impl;
 
+import com.alibaba.fastjson.TypeReference;
+import com.renyujie.common.utils.R;
 import com.renyujie.gulimall.product.entity.SkuImagesEntity;
 import com.renyujie.gulimall.product.entity.SpuInfoDescEntity;
+import com.renyujie.gulimall.product.feign.SeckillFeignService;
 import com.renyujie.gulimall.product.service.*;
+import com.renyujie.gulimall.product.vo.SeckillSkuInfoVo;
 import com.renyujie.gulimall.product.vo.SkuItemSaleAttrVo;
 import com.renyujie.gulimall.product.vo.SkuItemVo;
 import com.renyujie.gulimall.product.vo.SpuItemAttrGroupVo;
@@ -39,6 +43,8 @@ public class SkuInfoServiceImpl extends ServiceImpl<SkuInfoDao, SkuInfoEntity> i
     AttrGroupService attrGroupService;
     @Resource
     SkuSaleAttrValueService skuSaleAttrValueService;
+    @Autowired
+    SeckillFeignService seckillFeignService;
     //注入线程池  因为已经在MyThreadConfig中new ThreadPoolExecutor 的时候@Component注入容器了，所以可以直接用
     @Autowired
     ThreadPoolExecutor executor;
@@ -134,6 +140,7 @@ public class SkuInfoServiceImpl extends ServiceImpl<SkuInfoDao, SkuInfoEntity> i
      * 3 spu旗下的所有销售属性组合
      * 4 spu的介绍图片 pms_spu_info_desc
      * 5 spu的规格参数信息
+     * 6 spu的秒杀信息
      *
      * 本方法需要异步编排处理
      * 1 2 没关系 查谁都行
@@ -178,9 +185,18 @@ public class SkuInfoServiceImpl extends ServiceImpl<SkuInfoDao, SkuInfoEntity> i
             skuItemVo.setImages(skuImages);
         }, executor);
 
+        CompletableFuture<Void> seckillFuture = CompletableFuture.runAsync(() -> {
+            /**6 查询当前sku是否参加秒杀优惠**/
+            R r = seckillFeignService.getSkuSeckillInfo(skuId);
+            if (r.getCode() == 0) {
+                SeckillSkuInfoVo seckillSkuRedisVo = r.getData(new TypeReference<SeckillSkuInfoVo>() {});
+                skuItemVo.setSeckillSkuInfoVo(seckillSkuRedisVo);
+            }
+        }, executor);
+
         //异步编排 - 阻塞等结果
-        //等待所有1 2 3 4 5任务都完成 infoFuture可以省略(因为345都完成了，1肯定完成了)
-        CompletableFuture.allOf(saleFuture, descFuture, attrGroupFuture, imgFuture).get();
+        //等待所有1 2 3 4 5 6任务都完成 infoFuture可以省略(因为345都完成了，1肯定完成了)
+        CompletableFuture.allOf(saleFuture, descFuture, attrGroupFuture, imgFuture,seckillFuture).get();
 
         return skuItemVo;
     }

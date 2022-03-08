@@ -1,6 +1,7 @@
 package com.renyujie.gulimall.order.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.renyujie.common.dto.mq.SeckillOrderTo;
 import com.renyujie.common.utils.PageUtils;
 import com.renyujie.gulimall.order.entity.OrderEntity;
 import com.renyujie.gulimall.order.vo.*;
@@ -62,5 +63,10 @@ public interface OrderService extends IService<OrderEntity> {
      * 返回success，支付宝就再也不通知
      */
     String handlePayResult(PayAsyncVo payAsyncVo);
+
+    /**
+     * @description 创建秒杀单
+     */
+    void creatSeckillOrder(SeckillOrderTo seckillOrderTo);
 }
 

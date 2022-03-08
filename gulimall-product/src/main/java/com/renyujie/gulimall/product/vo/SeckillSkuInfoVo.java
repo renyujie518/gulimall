@@ -5,9 +5,7 @@ import lombok.Data;
 import java.math.BigDecimal;
 
 /**
- * @author 孟享广
- * @date 2021-02-21 10:54 上午
- * @description
+  秒杀信息
  */
 @Data
 public class SeckillSkuInfoVo {

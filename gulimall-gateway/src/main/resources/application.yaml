@@ -19,6 +19,21 @@
 #            - Path=/api/product/**
 #          filters:
 #            - RewritePath=/api/(?<segment>.*),/$\{segment}
+#         #秒杀服务1
+#        - id: coupon_route1
+#          uri: lb://gulimall-coupon
+#          predicates:
+#            - Path=/api/coupon/**
+#          filters:
+#            - RewritePath=/api/(?<segment>.*),/$\{segment}
+#         #秒杀服务2
+#        - id: coupon_route2
+#          uri: lb://gulimall-seckill
+#          predicates:
+#            - Path=/api/seckill/**
+#          filters:
+#            - RewritePath=/api/seckill(?<segment>.*),/$\{segment}
+#
 #        #仓储服务
 #        - id: ware_route
 #          uri: lb://gulimall-ware
@@ -52,36 +67,35 @@
 #        #p140 服务器nginx过来的"gulimall"组到网关88端口  是依据host断言
 #        #由于优先匹配host 如果放置前面可能导致#商品服务失效  所以放置最后
 #        - id: gulimall_host_route
-#            uri: lb://gulimall-product
-#            predicates:
-#              - Host=gulimall.com,item.gulimall.com
+#          uri: lb://gulimall-product
+#          predicates:
+#            - Host=gulimall.com,item.gulimall.com
 #
 #        #search服务转发
 #        - id: gulimall_search_route
-#            uri: lb://gulimall-search
-#            predicates:
-#              - Host=search.gulimall.com
+#          uri: lb://gulimall-search
+#          predicates:
+#            - Host=search.gulimall.com
 #
 #        #认证和登录服务
 #        - id: gulimall_auth_route
-#            uri: lb://gulimall-auth-server
-#            predicates:
-#              - Host=auth.gulimall.com
+#          uri: lb://gulimall-auth-server
+#          predicates:
+#            - Host=auth.gulimall.com
 #
 #        #购物车
 #        - id: gulimall_cart_route
-#            uri: lb://gulimall-cart
-#            predicates:
-#              - Host=cart.gulimall.com
+#          uri: lb://gulimall-cart
+#          predicates:
+#            - Host=cart.gulimall.com
 #
 #        #订单
 #        - id: gulimall_order_route
-#            uri: lb://gulimall-order
-#            predicates:
-#              - Host=order.gulimall.com
-#
+#          uri: lb://gulimall-order
+#          predicates:
+#            - Host=order.gulimall.com
 #        #订单付款转会员
 #        - id: gulimall_member_route
-#            uri: lb://gulimall-member
-#            predicates:
-#              - Host=member.gulimall.com
+#          uri: lb://gulimall-member
+#          predicates:
+#            - Host=member.gulimall.com

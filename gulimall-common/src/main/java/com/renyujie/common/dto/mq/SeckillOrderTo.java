@@ -5,9 +5,7 @@ import lombok.Data;
 import java.math.BigDecimal;
 
 /**
- * @author 孟享广
- * @date 2021-02-21 5:40 下午
- * @description
+  秒杀订单数据
  */
 @Data
 public class SeckillOrderTo {

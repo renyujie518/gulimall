@@ -1374,12 +1374,15 @@
         return false;
     })
     $("#seckillA").click(function () {
+        //秒杀前的登录也是一种限流手段
         var isLogin = [[${session.loginUser != null}]]
         if (isLogin) {
+            //这要与redis中保持一致
             var killId = $(this).attr("sessionid") + "场->" + $(this).attr("skuid");
+            //随机码
             var key = $(this).attr("code");
             var num = $("#numInput").val();
-            location.href = "http://seckill.gulimall.com/kill?killId=" + killId + "&key=" + key + "&num=" + num + "";
+            location.href = "http://127.0.0.1:88/api/seckill/kill?killId=" + killId + "&key=" + key + "&num=" + num + "";
             return false
         } else {
             alert("秒杀前你得请先登录鸭=(^.^)=");

@@ -194,6 +194,25 @@ public class MyRabbitMQConfig {
                 null);
     }
 
+    @Bean
+    public Queue orderSeckillOrderQueue() {
+
+        //是否持久化的 是否排他的(大家都能监听，谁抢到算谁的) 是否自动删除
+        return new Queue("order.seckill.order.queue", true, false, false);
+    }
+
+    @Bean
+    public Binding orderSeckillOrderQueueBinding() {
+
+        return new Binding(
+                "order.seckill.order.queue",
+                Binding.DestinationType.QUEUE,
+                "order-event-exchange",
+                "order.seckill.order",
+                null);
+    }
+
+
 
 
 
