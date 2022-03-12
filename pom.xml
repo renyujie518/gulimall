@@ -20,7 +20,6 @@
 		<module>renren-fast</module>
 		<module>gulimall-search</module>
 		<module>renren-generator</module>
-		<module>gulimall-common</module>
 		<module>gulimall-auth-server</module>
 		<module>gulimall-cart</module>
 		<module>gulimall-seckill</module>

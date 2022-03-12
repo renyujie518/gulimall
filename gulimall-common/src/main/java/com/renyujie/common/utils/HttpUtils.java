@@ -36,7 +36,8 @@ import java.util.Map;
  * @Description 社交登录时的工具类
  * @createTime 2022年02月27日 14:55:00
  */
-
+//https://www.geek-share.com/detail/2798539935.html
+@SuppressWarnings("unchecked")
 public class HttpUtils {
 
     /**

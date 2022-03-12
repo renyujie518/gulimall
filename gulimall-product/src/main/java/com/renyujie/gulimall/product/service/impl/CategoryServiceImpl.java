@@ -5,7 +5,6 @@ import com.alibaba.fastjson.TypeReference;
 import com.renyujie.gulimall.product.service.CategoryBrandRelationService;
 import com.renyujie.gulimall.product.vo.Catalog3Vo;
 import com.renyujie.gulimall.product.vo.Catelog2Vo;
-import com.sun.org.apache.xml.internal.resolver.CatalogEntry;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
